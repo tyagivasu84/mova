@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MOVA — Watch together, anywhere</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#141414; --bg-raised:#1c1c1c; --bg-card:#202020;
+    --red:#E50914; --blue:#5865F2; --green:#23A55A; --gold:#FFD166;
+    --text:#FFFFFF; --text-muted:#A3A3A3; --text-dim:#6B6B6B; --border:#2A2A2A;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{background:var(--bg); color:var(--text); font-family:'Inter',sans-serif;}
+  ::selection{background:var(--red); color:#fff;}
+  a{color:inherit; text-decoration:none;}
+  button{font-family:inherit;}
+  .display{font-family:'Archivo Black','Inter',sans-serif; letter-spacing:-0.02em;}
+  ::-webkit-scrollbar{width:8px; height:8px;}
+  ::-webkit-scrollbar-thumb{background:#333; border-radius:4px;}
+
+  /* ---------- SHELL ---------- */
+  .app{display:flex; min-height:100vh;}
+  .sidebar{
+    width:88px; flex-shrink:0; background:var(--bg-raised); border-right:1px solid var(--border);
+    display:flex; flex-direction:column; align-items:center; padding:20px 0; gap:6px; position:sticky; top:0; height:100vh;
+  }
+  .logo-mark{
+    width:38px; height:38px; border-radius:10px; margin-bottom:22px;
+    background:linear-gradient(135deg, var(--red), var(--blue));
+    display:flex; align-items:center; justify-content:center; font-family:'Archivo Black'; font-size:18px;
+  }
+  .nav-item{
+    width:64px; padding:10px 4px; border-radius:10px; display:flex; flex-direction:column; align-items:center; gap:4px;
+    cursor:pointer; color:var(--text-dim); font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.03em;
+    transition:.15s ease; background:none; border:none;
+  }
+  .nav-item .icon{width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round;}
+  .nav-item:hover{color:var(--text); background:rgba(255,255,255,0.04);}
+  .nav-item.active{color:#fff; background:rgba(229,9,20,0.14);}
+  .nav-item.active .icon{stroke:var(--red);}
+
+  /* speaking-now ring */
+  @keyframes speakring{0%,100%{box-shadow:0 0 0 2px var(--green);}50%{box-shadow:0 0 0 3px var(--green), 0 0 8px rgba(35,165,90,0.5);}}
+  .speaking{box-shadow:0 0 0 2px var(--green); animation:speakring 1.2s infinite;}
+
+  /* platform badge (neutral, no brand marks) */
+  .platform-badge{display:inline-flex; align-items:center; gap:5px; font-size:10px; font-weight:700; padding:4px 9px; border-radius:100px; background:rgba(255,255,255,0.06); color:var(--text-muted); border:1px solid var(--border);}
+  .platform-dot{width:6px; height:6px; border-radius:50%; flex-shrink:0;}
+
+  /* waiting room / join request modal */
+  .modal-overlay{display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:200; align-items:center; justify-content:center;}
+  .modal-overlay.open{display:flex;}
+  .modal-box{background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:26px; width:340px; max-width:90vw;}
+  .modal-box h3{font-size:16px; margin-bottom:6px;}
+  .modal-box p{font-size:12.5px; color:var(--text-dim); margin-bottom:18px; line-height:1.5;}
+  .request-row{display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--border);}
+  .request-row:last-of-type{border-bottom:none;}
+  .request-row .who{flex:1; font-size:13px; font-weight:700;}
+  .request-actions{display:flex; gap:8px;}
+  .req-btn{padding:6px 12px; border-radius:6px; font-size:11.5px; font-weight:800; border:none; cursor:pointer;}
+  .req-accept{background:var(--green); color:#fff;}
+  .req-decline{background:transparent; border:1px solid var(--border); color:var(--text-muted);}
+  .modal-close{width:100%; margin-top:16px;}
+  .waiting-pulse{display:flex; align-items:center; gap:10px; font-size:13px; color:var(--text-muted); justify-content:center; padding:20px 0;}
+  .waiting-dot{width:8px; height:8px; border-radius:50%; background:var(--gold); animation:pulse 1s infinite;}
+
+  /* empty states */
+  .empty-state{text-align:center; padding:60px 20px; border:1px dashed var(--border); border-radius:14px; color:var(--text-dim);}
+  .empty-state .emoji{font-size:34px; margin-bottom:12px;}
+  .empty-state h3{color:var(--text); font-size:16px; margin-bottom:6px;}
+  .empty-state p{font-size:12.5px; margin-bottom:18px; max-width:320px; margin-left:auto; margin-right:auto;}
+
+  /* notification bell */
+  .bell-wrap{position:relative;}
+  .bell-btn{position:relative; background:none; border:none; cursor:pointer; color:var(--text-muted); padding:6px; display:flex;}
+  .bell-btn:hover{color:#fff;}
+  .bell-btn svg{width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round;}
+  .bell-badge{position:absolute; top:2px; right:2px; width:8px; height:8px; border-radius:50%; background:var(--red); border:1.5px solid var(--bg);}
+  .bell-dropdown{display:none; position:absolute; top:calc(100% + 12px); right:0; width:320px; background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:10px; z-index:150; box-shadow:0 12px 30px rgba(0,0,0,0.4);}
+  .bell-dropdown.open{display:block;}
+  .bell-head{font-size:13px; font-weight:800; padding:8px 10px 12px;}
+  .notif-row{display:flex; gap:10px; padding:10px; border-radius:8px; cursor:pointer;}
+  .notif-row:hover{background:rgba(255,255,255,0.04);}
+  .notif-icon{width:32px; height:32px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:14px;}
+  .notif-body{flex:1; font-size:12px; line-height:1.4;}
+  .notif-body b{font-weight:700;}
+  .notif-time{font-size:10.5px; color:var(--text-dim); margin-top:2px;}
+  .notif-actions{display:flex; gap:6px; margin-top:6px;}
+
+  /* tab panels */
+  .tab-panel{display:none;}
+  .tab-panel.active{display:block;}
+
+  /* achievements */
+  .ach-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:14px;}
+  .ach-card{background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:16px; text-align:center;}
+  .ach-card.locked{opacity:0.4;}
+  .ach-card .ach-icon{font-size:26px; margin-bottom:8px;}
+  .ach-card h4{font-size:12.5px; margin-bottom:3px;}
+  .ach-card span{font-size:10.5px; color:var(--text-dim);}
+
+  /* friends panel */
+  .friend-search{display:flex; gap:8px; margin-bottom:18px;}
+  .friend-search input{flex:1; background:var(--bg-card); border:1px solid var(--border); border-radius:8px; padding:10px 14px; color:#fff; font-size:13px;}
+  .friend-row{display:flex; align-items:center; gap:12px; padding:12px 14px; background:var(--bg-card); border:1px solid var(--border); border-radius:10px; margin-bottom:8px;}
+  .friend-row .info{flex:1;}
+  .friend-row .info b{font-size:13px; display:block;}
+  .friend-row .info span{font-size:11px; color:var(--text-dim);}
+
+  /* verification */
+  .verified-badge{display:inline-flex; align-items:center; justify-content:center; width:16px; height:16px; border-radius:50%; background:var(--blue); vertical-align:middle; margin-left:4px;}
+  .verified-badge svg{width:10px; height:10px; stroke:#fff; stroke-width:3; fill:none; stroke-linecap:round; stroke-linejoin:round;}
+  .verify-cta{display:inline-flex; align-items:center; gap:8px; font-size:12px; font-weight:700; color:var(--blue); background:rgba(88,101,242,0.1); border:1px solid rgba(88,101,242,0.3); padding:7px 14px; border-radius:8px; cursor:pointer; margin-left:14px;}
+  .verify-step{display:none;}
+  .verify-step.active{display:block;}
+  .pose-diagram{width:110px; height:110px; margin:0 auto 16px; border-radius:50%; border:2px dashed var(--border); display:flex; align-items:center; justify-content:center; font-size:38px; background:var(--bg-raised);}
+  .verify-progress{display:flex; gap:6px; margin-bottom:18px;}
+  .verify-progress span{flex:1; height:3px; border-radius:2px; background:var(--border);}
+  .verify-progress span.done{background:var(--blue);}
+  .verify-success{text-align:center;}
+  .verify-success .big-check{width:56px; height:56px; border-radius:50%; background:var(--green); display:flex; align-items:center; justify-content:center; margin:0 auto 16px;}
+  .verify-success .big-check svg{width:28px; height:28px; stroke:#fff; stroke-width:3; fill:none; stroke-linecap:round; stroke-linejoin:round;}
+
+  .main{flex:1; min-width:0;}
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between; padding:16px 32px;
+    border-bottom:1px solid var(--border); position:sticky; top:0; background:rgba(20,20,20,0.9); backdrop-filter:blur(8px); z-index:50;
+  }
+  .search-box{
+    flex:1; max-width:420px; display:flex; align-items:center; gap:8px; background:var(--bg-card);
+    border:1px solid var(--border); border-radius:8px; padding:9px 14px; color:var(--text-dim); font-size:13px;
+  }
+  .topbar-right{display:flex; align-items:center; gap:18px;}
+  .pts{font-size:13px; font-weight:700; color:var(--gold);}
+  .avatar-sm{width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg,var(--blue),var(--green)); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px;}
+  .btn{padding:9px 18px; border-radius:6px; font-size:13px; font-weight:700; border:none; cursor:pointer;}
+  .btn-primary{background:var(--red); color:#fff;}
+  .btn-ghost{background:transparent; color:var(--text); border:1px solid var(--border);}
+  .btn-blue{background:var(--blue); color:#fff;}
+  .btn-green{background:var(--green); color:#fff;}
+
+  .page{display:none; padding:32px;}
+  .page.active{display:block; animation:fade .3s ease;}
+  @keyframes fade{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+
+  .section-head{display:flex; align-items:baseline; justify-content:space-between; margin-bottom:18px;}
+  .section-head h2{font-size:20px;}
+  .section-head span{font-size:12.5px; color:var(--text-dim); font-weight:600;}
+  .row{display:flex; gap:14px; overflow-x:auto; padding-bottom:10px; margin-bottom:36px;}
+
+  .poster{
+    flex:0 0 150px; height:215px; border-radius:10px; position:relative;
+    background:linear-gradient(160deg, var(--pa,#3a3a3a), var(--pb,#181818));
+    display:flex; align-items:flex-end; padding:11px; border:1px solid var(--border); transition:.2s ease;
+  }
+  .poster:hover{transform:translateY(-5px);}
+  .poster .rating{position:absolute; top:9px; right:9px; font-size:10.5px; font-weight:800; background:rgba(0,0,0,0.55); padding:3px 6px; border-radius:5px; color:var(--gold);}
+  .poster .title{font-size:13px; font-weight:800; line-height:1.2;}
+  .poster .meta{font-size:10.5px; color:var(--text-muted); margin-top:2px;}
+
+  /* room cards */
+  .rooms-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:16px;}
+  .room-card{background:var(--bg-card); border:1px solid var(--border); border-radius:14px; padding:17px; position:relative; overflow:hidden;}
+  .room-top{display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;}
+  .room-live{display:flex; align-items:center; gap:6px; font-size:10.5px; font-weight:800; color:var(--red); text-transform:uppercase;}
+  .live-dot{width:7px; height:7px; border-radius:50%; background:var(--red); animation:pulse 1.4s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+  .platform-pill{font-size:10px; font-weight:700; padding:4px 9px; border-radius:100px; background:rgba(255,255,255,0.06); color:var(--text-muted); border:1px solid var(--border);}
+  .room-card h3{font-size:16px; margin-bottom:3px;}
+  .room-card .room-desc{font-size:12px; color:var(--text-dim); margin-bottom:12px;}
+  .avatars{display:flex; margin-bottom:10px;}
+  .avatars span{width:26px; height:26px; border-radius:50%; border:2px solid var(--bg-card); margin-left:-8px; font-size:10.5px; font-weight:800; display:flex; align-items:center; justify-content:center; color:#fff;}
+  .avatars span:first-child{margin-left:0;}
+  .avatars .more{background:var(--bg-raised); color:var(--text-muted); border:2px dashed var(--border);}
+  .room-footer{display:flex; justify-content:space-between; align-items:center;}
+  .seats{font-size:10.5px; color:var(--text-dim);}
+  .join-btn{background:var(--blue); color:#fff; font-size:11.5px; font-weight:800; padding:7px 14px; border-radius:6px; border:none; cursor:pointer;}
+
+  /* stats strip */
+  .stats-strip{display:flex; flex-wrap:wrap; background:var(--bg-raised); border:1px solid var(--border); border-radius:12px; margin-bottom:32px;}
+  .stat{flex:1; min-width:140px; padding:18px 22px; border-right:1px solid var(--border);}
+  .stat:last-child{border-right:none;}
+  .stat b{display:block; font-family:'Archivo Black'; font-size:26px;}
+  .stat span{font-size:11px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.04em;}
+  .stat.green b{color:var(--green);} .stat.red b{color:var(--red);} .stat.blue b{color:var(--blue);}
+
+  /* filters */
+  .filters{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:22px;}
+  .filter-chip{padding:8px 16px; border-radius:100px; background:var(--bg-card); border:1px solid var(--border); font-size:12.5px; font-weight:600; color:var(--text-muted); cursor:pointer;}
+  .filter-chip.active{background:var(--red); color:#fff; border-color:var(--red);}
+
+  /* diary entries */
+  .diary-list{display:flex; flex-direction:column; gap:10px;}
+  .diary-entry{display:flex; gap:14px; align-items:center; background:var(--bg-card); border:1px solid var(--border); border-radius:10px; padding:12px 16px;}
+  .diary-entry .thumb{width:44px; height:60px; border-radius:6px; flex-shrink:0; background:linear-gradient(160deg,var(--pa,#333),var(--pb,#111));}
+  .diary-entry .info{flex:1;}
+  .diary-entry .info h4{font-size:14px; margin-bottom:2px;}
+  .diary-entry .info span{font-size:11.5px; color:var(--text-dim);}
+  .diary-entry .rating{color:var(--gold); font-weight:800; font-size:13px;}
+
+  /* profile */
+  .profile-cover{height:150px; border-radius:14px; background:linear-gradient(120deg, rgba(229,9,20,0.25), rgba(88,101,242,0.25)); margin-bottom:-52px; border:1px solid var(--border);}
+  .profile-head{display:flex; align-items:flex-end; gap:18px; padding:0 20px 24px;}
+  .profile-avatar{width:100px; height:100px; border-radius:50%; background:linear-gradient(135deg,var(--blue),var(--green)); border:4px solid var(--bg); display:flex; align-items:center; justify-content:center; font-family:'Archivo Black'; font-size:32px;}
+  .profile-meta h2{font-size:22px;}
+  .profile-meta span{font-size:13px; color:var(--text-dim);}
+  .tabs{display:flex; gap:4px; border-bottom:1px solid var(--border); margin-bottom:22px;}
+  .tab{padding:12px 18px; font-size:13px; font-weight:700; color:var(--text-dim); cursor:pointer; border-bottom:2px solid transparent;}
+  .tab.active{color:#fff; border-color:var(--red);}
+
+  /* messages */
+  .msg-shell{display:flex; height:calc(100vh - 140px); border:1px solid var(--border); border-radius:14px; overflow:hidden;}
+  .msg-list{width:260px; border-right:1px solid var(--border); overflow-y:auto; flex-shrink:0;}
+  .msg-item{display:flex; gap:10px; padding:12px 16px; cursor:pointer; border-bottom:1px solid var(--border);}
+  .msg-item.active{background:var(--bg-card);}
+  .msg-item .name{font-size:13px; font-weight:700;}
+  .msg-item .preview{font-size:11.5px; color:var(--text-dim);}
+  .msg-window{flex:1; display:flex; flex-direction:column;}
+  .msg-window-head{padding:14px 20px; border-bottom:1px solid var(--border); font-weight:700; font-size:14px;}
+  .msg-body{flex:1; padding:20px; display:flex; flex-direction:column; gap:12px; overflow-y:auto;}
+  .bubble{max-width:60%; padding:10px 14px; border-radius:14px; font-size:13px; line-height:1.4;}
+  .bubble.them{background:var(--bg-card); align-self:flex-start; border-bottom-left-radius:4px;}
+  .bubble.me{background:var(--blue); align-self:flex-end; border-bottom-right-radius:4px;}
+  .msg-input{display:flex; gap:10px; padding:14px 20px; border-top:1px solid var(--border);}
+  .msg-input input{flex:1; background:var(--bg-card); border:1px solid var(--border); border-radius:8px; padding:10px 14px; color:#fff; font-size:13px;}
+
+  /* leaderboard */
+  .lb-row{display:flex; align-items:center; gap:14px; padding:12px 16px; border-radius:10px; background:var(--bg-card); border:1px solid var(--border); margin-bottom:8px;}
+  .lb-rank{width:26px; font-family:'Archivo Black'; font-size:15px; color:var(--text-dim); text-align:center;}
+  .lb-row:nth-child(1) .lb-rank{color:var(--gold);}
+  .lb-row:nth-child(2) .lb-rank{color:#C9CDD3;}
+  .lb-row:nth-child(3) .lb-rank{color:#CD7F32;}
+  .lb-name{flex:1; font-size:13.5px; font-weight:700;}
+  .lb-pts{font-size:13px; font-weight:800; color:var(--gold);}
+
+  /* premium */
+  .plans{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:20px; max-width:900px;}
+  .plan-card{background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:26px;}
+  .plan-card.highlight{border-color:var(--red); background:linear-gradient(160deg, rgba(229,9,20,0.08), var(--bg-card));}
+  .plan-card h3{font-size:16px; margin-bottom:6px;}
+  .plan-price{font-family:'Archivo Black'; font-size:34px; margin-bottom:14px;}
+  .plan-price span{font-size:13px; color:var(--text-dim); font-family:'Inter'; font-weight:400;}
+  .plan-card ul{list-style:none; margin-bottom:20px;}
+  .plan-card li{font-size:12.5px; color:var(--text-muted); padding:6px 0; display:flex; gap:8px;}
+  .plan-card li::before{content:"✓"; color:var(--green); font-weight:800;}
+
+  /* clubs */
+  .clubs-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:16px;}
+  .club-card{background:var(--bg-card); border:1px solid var(--border); border-radius:14px; overflow:hidden; cursor:pointer; transition:.2s ease;}
+  .club-card:hover{transform:translateY(-3px); border-color:rgba(88,101,242,0.4);}
+  .club-banner{height:70px; background:linear-gradient(120deg, var(--ca,#3b2f6e), var(--cb,#141414));}
+  .club-body{padding:14px 16px;}
+  .club-body h3{font-size:15px; margin-bottom:3px;}
+  .club-body .club-meta{font-size:11.5px; color:var(--text-dim); margin-bottom:10px;}
+  .role-badge{font-size:9.5px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; padding:3px 8px; border-radius:5px;}
+  .role-owner{background:rgba(255,209,102,0.18); color:var(--gold);}
+  .role-admin{background:rgba(229,9,20,0.18); color:var(--red);}
+  .role-mod{background:rgba(88,101,242,0.18); color:var(--blue);}
+  .role-vip{background:rgba(35,165,90,0.18); color:var(--green);}
+  .role-member{background:rgba(255,255,255,0.06); color:var(--text-muted);}
+
+  .club-modal-box{background:var(--bg-card); border:1px solid var(--border); border-radius:16px; width:560px; max-width:92vw; max-height:85vh; overflow:hidden; display:flex; flex-direction:column;}
+  .club-modal-banner{height:90px; background:linear-gradient(120deg, var(--ca,#3b2f6e), var(--cb,#141414)); flex-shrink:0; position:relative;}
+  .club-modal-banner .close-x{position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.5); border:none; color:#fff; width:28px; height:28px; border-radius:50%; cursor:pointer; font-size:14px;}
+  .club-modal-head{padding:14px 20px 0;}
+  .club-modal-head h3{font-size:17px;}
+  .club-modal-head span{font-size:12px; color:var(--text-dim);}
+  .club-tabs{display:flex; gap:2px; overflow-x:auto; padding:12px 20px 0; flex-shrink:0;}
+  .club-tab{font-size:11.5px; font-weight:700; color:var(--text-dim); padding:8px 12px; border-bottom:2px solid transparent; cursor:pointer; white-space:nowrap;}
+  .club-tab.active{color:#fff; border-color:var(--red);}
+  .club-panel{display:none; padding:16px 20px; overflow-y:auto; flex:1;}
+  .club-panel.active{display:block;}
+  .club-member-row{display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--border);}
+  .club-member-row:last-child{border-bottom:none;}
+  .club-member-row .name{flex:1; font-size:13px; font-weight:600;}
+  .rule-item{font-size:12.5px; color:var(--text-muted); padding:8px 0; border-bottom:1px solid var(--border);}
+  .rule-item:last-child{border-bottom:none;}
+
+  /* rewards page */
+  .streak-row{display:flex; gap:8px; margin-bottom:10px;}
+  .streak-day{flex:1; background:var(--bg-card); border:1px solid var(--border); border-radius:10px; padding:12px 6px; text-align:center;}
+  .streak-day.today{border-color:var(--gold); background:rgba(255,209,102,0.08);}
+  .streak-day.done{opacity:0.5;}
+  .streak-day b{display:block; font-size:14px; color:var(--gold); margin-bottom:2px;}
+  .streak-day span{font-size:9.5px; color:var(--text-dim);}
+  .streak-milestones{display:flex; gap:10px; margin-bottom:32px;}
+  .milestone-chip{flex:1; background:var(--bg-raised); border:1px solid var(--border); border-radius:10px; padding:12px; text-align:center; font-size:11px; color:var(--text-dim);}
+  .milestone-chip b{display:block; color:var(--text); font-size:13px; margin-bottom:2px;}
+
+  .referral-box{display:flex; align-items:center; gap:12px; background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:16px 20px; margin-bottom:16px;}
+  .referral-box input{flex:1; background:var(--bg-raised); border:1px solid var(--border); border-radius:8px; padding:10px 14px; color:#fff; font-size:13px;}
+  .referral-ladder{display:flex; gap:10px; margin-bottom:36px;}
+  .ladder-step{flex:1; background:var(--bg-card); border:1px solid var(--border); border-radius:10px; padding:14px 10px; text-align:center;}
+  .ladder-step.reached{border-color:var(--green);}
+  .ladder-step b{display:block; font-size:15px; font-family:'Archivo Black';}
+  .ladder-step.reached b{color:var(--green);}
+  .ladder-step span{font-size:10px; color:var(--text-dim);}
+
+  .shop-tabs{display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap;}
+  .shop-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:14px; margin-bottom:36px;}
+  .shop-item{background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:16px; text-align:center;}
+  .shop-item .shop-icon{width:44px; height:44px; border-radius:10px; margin:0 auto 10px; display:flex; align-items:center; justify-content:center; font-size:20px; background:var(--bg-raised);}
+  .shop-item h4{font-size:12.5px; margin-bottom:6px;}
+  .shop-item .price{font-size:11.5px; font-weight:800; color:var(--gold);}
+  .shop-item .owned-tag{font-size:10.5px; font-weight:800; color:var(--green);}
+  .shop-item .lock-tag{font-size:10px; font-weight:700; color:var(--blue); background:rgba(88,101,242,0.12); padding:2px 7px; border-radius:100px;}
+  .shop-item button{width:100%; margin-top:8px; padding:7px; border-radius:6px; font-size:11px; font-weight:800; border:none; cursor:pointer; background:var(--blue); color:#fff;}
+
+  .ad-card{display:flex; align-items:center; justify-content:space-between; background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:16px 20px; margin-bottom:36px;}
+  .ad-card .info{font-size:12.5px; color:var(--text-muted);}
+  .ad-card .info b{display:block; color:#fff; font-size:14px; margin-bottom:3px;}
+
+  /* host room modal */
+  .host-modal-box{background:var(--bg-card); border:1px solid var(--border); border-radius:16px; width:420px; max-width:92vw; max-height:88vh; overflow-y:auto; padding:0;}
+  .host-tabs{display:flex; border-bottom:1px solid var(--border);}
+  .host-tab{flex:1; text-align:center; padding:14px; font-size:13px; font-weight:800; color:var(--text-dim); cursor:pointer; border-bottom:2px solid transparent;}
+  .host-tab.active{color:#fff; border-color:var(--red);}
+  .host-form{padding:20px;}
+  .host-panel{display:none;}
+  .host-panel.active{display:block;}
+  .field{margin-bottom:14px;}
+  .field label{display:block; font-size:11.5px; font-weight:700; color:var(--text-muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:.03em;}
+  .field input, .field select, .field textarea{width:100%; background:var(--bg-raised); border:1px solid var(--border); border-radius:8px; padding:10px 12px; color:#fff; font-size:13px; font-family:inherit;}
+  .field-row{display:flex; gap:10px;}
+  .field-row .field{flex:1;}
+  .toggle-row{display:flex; gap:8px; margin-bottom:14px;}
+  .toggle-chip{flex:1; text-align:center; padding:9px; border-radius:8px; background:var(--bg-raised); border:1px solid var(--border); font-size:12px; font-weight:700; color:var(--text-muted); cursor:pointer;}
+  .toggle-chip.active{background:var(--blue); color:#fff; border-color:var(--blue);}
+
+  .rsvp-row{display:flex; gap:8px; margin-top:10px;}
+  .rsvp-btn{flex:1; padding:7px; border-radius:6px; font-size:11px; font-weight:800; border:1px solid var(--border); background:transparent; color:var(--text-muted); cursor:pointer;}
+  .rsvp-btn.selected{background:var(--green); border-color:var(--green); color:#fff;}
+  .countdown-badge{font-size:11px; font-weight:800; color:var(--gold); background:rgba(255,209,102,0.1); padding:3px 9px; border-radius:100px;}
+
+  /* messages upgrades */
+  .msg-window-head{display:flex; align-items:center; justify-content:space-between;}
+  .msg-head-actions{display:flex; gap:6px;}
+  .icon-btn{background:none; border:none; color:var(--text-muted); cursor:pointer; padding:6px; border-radius:6px; display:flex;}
+  .icon-btn:hover{color:#fff; background:rgba(255,255,255,0.06);}
+  .icon-btn svg{width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round;}
+  .typing-indicator{display:flex; gap:4px; align-self:flex-start; background:var(--bg-card); padding:12px 14px; border-radius:14px; border-bottom-left-radius:4px;}
+  .typing-indicator span{width:6px; height:6px; border-radius:50%; background:var(--text-dim); animation:typingBounce 1.2s infinite;}
+  .typing-indicator span:nth-child(2){animation-delay:.2s;} .typing-indicator span:nth-child(3){animation-delay:.4s;}
+  @keyframes typingBounce{0%,60%,100%{transform:translateY(0); opacity:.4;} 30%{transform:translateY(-4px); opacity:1;}}
+  .bubble-reactions{display:flex; gap:4px; margin-top:4px;}
+  .bubble-reactions span{background:var(--bg-raised); border:1px solid var(--border); border-radius:100px; padding:1px 6px; font-size:11px;}
+  .read-receipt{font-size:10px; color:var(--text-dim); align-self:flex-end; margin-top:-6px;}
+  .voice-note-bubble{display:flex; align-items:center; gap:8px; max-width:60%; padding:9px 12px; border-radius:14px; background:var(--bg-card); align-self:flex-start; border-bottom-left-radius:4px;}
+  .voice-note-bubble .play-btn{width:26px; height:26px; border-radius:50%; background:var(--blue); border:none; color:#fff; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center;}
+  .waveform{display:flex; align-items:center; gap:2px; height:18px;}
+  .waveform span{width:2px; background:var(--text-dim); border-radius:1px;}
+
+  @media (max-width:820px){
+    .sidebar{width:64px;}
+    .nav-item{width:52px;}
+    .search-box{display:none;}
+    .msg-list{width:200px;}
+  }
+  @media (prefers-reduced-motion: reduce){*{animation:none !important; transition:none !important;}}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="sidebar">
+    <div class="logo-mark display">M</div>
+    <button class="nav-item active" data-page="home">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9"/></svg>Home</button>
+    <button class="nav-item" data-page="discover">
+      <svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.3-4.3"/></svg>Search</button>
+    <button class="nav-item" data-page="rooms">
+      <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="13" rx="2"/><path d="M9.5 9.5v4l4-2z"/></svg>Rooms</button>
+    <button class="nav-item" data-page="clubs">
+      <svg class="icon" viewBox="0 0 24 24"><circle cx="8" cy="9" r="3"/><circle cx="16" cy="9" r="3"/><path d="M3 20c0-3.5 2.5-6 5-6s5 2.5 5 6M11 20c0-3.5 2.5-6 5-6s5 2.5 5 6"/></svg>Clubs</button>
+    <button class="nav-item" data-page="diary">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M5 4h11a2 2 0 0 1 2 2v14H7a2 2 0 0 1-2-2Z"/><path d="M9 8h6M9 12h6"/></svg>Diary</button>
+    <button class="nav-item" data-page="quiz">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M8 4h8v4a4 4 0 0 1-8 0Z"/><path d="M8 5H5a2 2 0 0 0 2 4M16 5h3a2 2 0 0 1-2 4"/><path d="M12 12v3M9 20h6M10.5 15h3v2h-3z"/></svg>Quiz</button>
+    <button class="nav-item" data-page="messages">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M4 5h16v11H8l-4 4Z"/></svg>Chat</button>
+    <button class="nav-item" data-page="profile">
+      <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c1-4 4.5-6 7-6s6 2 7 6"/></svg>Profile</button>
+    <button class="nav-item" data-page="rewards">
+      <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="m12 8 1.3 2.6 2.9.4-2.1 2 .5 2.9L12 14.5 9.4 15.9l.5-2.9-2.1-2 2.9-.4Z"/></svg>Rewards</button>
+    <button class="nav-item" data-page="premium">
+      <svg class="icon" viewBox="0 0 24 24"><path d="m12 3 2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.3-4.1 5.9-.9Z"/></svg>Premium</button>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="search-box">🔍 Search movies, users, rooms…</div>
+      <div class="topbar-right">
+        <span class="pts">★ 2,140 pts</span>
+        <div class="bell-wrap">
+          <button class="bell-btn" id="bellBtn">
+            <svg viewBox="0 0 24 24"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6Z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
+            <span class="bell-badge" id="bellBadge"></span>
+          </button>
+          <div class="bell-dropdown" id="bellDropdown">
+            <div class="bell-head">Notifications</div>
+            <div class="notif-row">
+              <div class="notif-icon" style="background:rgba(88,101,242,0.18); color:var(--blue);">👤</div>
+              <div class="notif-body"><b>@juno</b> sent you a friend request<div class="notif-time">2m ago</div>
+                <div class="notif-actions"><button class="req-btn req-accept">Accept</button><button class="req-btn req-decline">Decline</button></div>
+              </div>
+            </div>
+            <div class="notif-row">
+              <div class="notif-icon" style="background:rgba(35,165,90,0.18); color:var(--green);">🎬</div>
+              <div class="notif-body"><b>Recommended for you:</b> Marigold House — 91% match to your taste<div class="notif-time">1h ago</div></div>
+            </div>
+            <div class="notif-row">
+              <div class="notif-icon" style="background:rgba(255,209,102,0.18); color:var(--gold);">🏆</div>
+              <div class="notif-body">You unlocked <b>100 Movies Logged</b><div class="notif-time">3h ago</div></div>
+            </div>
+            <div class="notif-row">
+              <div class="notif-icon" style="background:rgba(229,9,20,0.18); color:var(--red);">📺</div>
+              <div class="notif-body"><b>@rosaline</b> invited you to "Marigold House — First watch"<div class="notif-time">5h ago</div></div>
+            </div>
+            <div class="notif-row">
+              <div class="notif-icon" style="background:rgba(255,255,255,0.08); color:var(--text-muted);">💬</div>
+              <div class="notif-body"><b>@kel_m</b> commented on your review<div class="notif-time">1d ago</div></div>
+            </div>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('hostRoomModal')">+ Host a room</button>
+        <button class="btn btn-ghost" id="emptyToggle" style="font-size:12px; padding:8px 14px;">Preview: new user</button>
+      <div class="avatar-sm">R</div>
+      </div>
+    </div>
+
+    <!-- ===================== HOME ===================== -->
+    <div class="page active" id="home">
+      <div class="section-head"><h2>Trending this week</h2><span>40K new logs today</span></div>
+      <div class="row" id="posterRow"></div>
+
+      <div class="section-head"><h2>Live watch rooms</h2><span>Join with your own stream</span></div>
+      <div class="rooms-grid" id="roomsHome"></div>
+    </div>
+
+    <!-- ===================== DISCOVER ===================== -->
+    <div class="page" id="discover">
+      <div class="section-head"><h2>Discover</h2><span>Movies, people, and rooms that match your taste</span></div>
+      <div class="filters">
+        <div class="filter-chip active">All</div>
+        <div class="filter-chip">Movies</div>
+        <div class="filter-chip">Series</div>
+        <div class="filter-chip">Users</div>
+        <div class="filter-chip">Watch Rooms</div>
+        <div class="filter-chip">Reviews</div>
+      </div>
+      <div class="filters">
+        <div class="filter-chip">Genre ▾</div>
+        <div class="filter-chip">Language ▾</div>
+        <div class="filter-chip">Country ▾</div>
+        <div class="filter-chip">Year ▾</div>
+        <div class="filter-chip">Platform ▾</div>
+      </div>
+
+      <div class="section-head"><h2>Trending users</h2><span></span></div>
+      <div class="row" id="trendingUsers"></div>
+
+      <div class="section-head"><h2>Trending reviews</h2><span></span></div>
+      <div class="diary-list" id="trendingReviews" style="margin-bottom:36px;"></div>
+    </div>
+
+    <!-- ===================== ROOMS ===================== -->
+    <div class="page" id="rooms">
+      <div class="section-head"><h2>Watch Rooms</h2><span>1,204 live now</span></div>
+      <div class="filters">
+        <div class="filter-chip active">All platforms</div>
+        <div class="filter-chip">Netflix</div>
+        <div class="filter-chip">Prime Video</div>
+        <div class="filter-chip">Disney+</div>
+        <div class="filter-chip">Apple TV+</div>
+        <div class="filter-chip">JioHotstar</div>
+      </div>
+      <div class="rooms-grid" id="roomsFull"></div>
+      <div style="margin-top:24px; margin-bottom:32px;">
+        <button class="btn btn-ghost" onclick="openModal('hostModal')">👤 You're hosting "Marigold House" — 3 people waiting to join</button>
+      </div>
+
+      <div class="section-head"><h2>Scheduled rooms</h2><span>Your timezone: GMT+5:30</span></div>
+      <div class="rooms-grid" id="scheduledRooms"></div>
+    </div>
+
+    <!-- ===================== CLUBS ===================== -->
+    <div class="page" id="clubs">
+      <div class="section-head">
+        <h2>Clubs</h2>
+        <button class="btn btn-primary" style="padding:8px 16px; font-size:12px;" onclick="openModal('createClubModal')">+ Create Club</button>
+      </div>
+      <div class="filters">
+        <div class="filter-chip active">All Clubs</div>
+        <div class="filter-chip">My Clubs</div>
+        <div class="filter-chip">Marvel</div>
+        <div class="filter-chip">DC</div>
+        <div class="filter-chip">Anime</div>
+        <div class="filter-chip">K-Drama</div>
+      </div>
+      <div class="clubs-grid" id="clubsGrid"></div>
+    </div>
+
+    <!-- ===================== DIARY ===================== -->
+    <div class="page" id="diary">
+      <div class="section-head"><h2>Your Diary</h2><span>147 movies logged</span></div>
+      <div class="stats-strip">
+        <div class="stat red"><b>147</b><span>Movies logged</span></div>
+        <div class="stat"><b>4.1</b><span>Avg rating</span></div>
+        <div class="stat green"><b>Thriller</b><span>Top genre</span></div>
+        <div class="stat blue"><b>312h</b><span>Hours watched</span></div>
+        <div class="stat"><b>89%</b><span>Taste match avg</span></div>
+      </div>
+      <div class="section-head"><h2>Recent entries</h2><button class="btn btn-primary" style="padding:7px 14px; font-size:12px;">+ Log a movie</button></div>
+      <div class="diary-list" id="diaryList"></div>
+    </div>
+
+    <!-- ===================== QUIZ / LEADERBOARD ===================== -->
+    <div class="page" id="quiz">
+      <div class="section-head"><h2>Quiz Night — Fridays 8PM</h2><span>Weekly tournament</span></div>
+      <div class="rooms-grid" style="margin-bottom:36px;">
+        <div class="room-card">
+          <div class="room-top"><span class="room-live" style="color:var(--green)"><span class="live-dot" style="background:var(--green)"></span>OPEN</span><span class="platform-pill">Free entry</span></div>
+          <h3>90s Thrillers</h3>
+          <div class="room-desc">12 questions · 30s timer</div>
+          <div class="room-footer"><span class="seats">2,310 playing</span><button class="join-btn" style="background:var(--green)">Play now</button></div>
+        </div>
+        <div class="room-card">
+          <div class="room-top"><span class="room-live"><span class="live-dot"></span>SOON</span><span class="platform-pill">Premium</span></div>
+          <h3>A24 Deep Cuts</h3>
+          <div class="room-desc">Friends-only bracket · 2x points</div>
+          <div class="room-footer"><span class="seats">Starts in 14m</span><button class="join-btn">Remind me</button></div>
+        </div>
+        <div class="room-card">
+          <div class="room-top"><span class="room-live" style="color:var(--text-dim)"><span class="live-dot" style="background:var(--text-dim); animation:none;"></span>ENDED</span><span class="platform-pill">Weekly</span></div>
+          <h3>Best Picture Winners</h3>
+          <div class="room-desc">Leaderboard locked</div>
+          <div class="room-footer"><span class="seats">1st: @filmfanatic</span><button class="join-btn btn-ghost" style="background:transparent; border:1px solid var(--border); color:var(--text-muted);">Results</button></div>
+        </div>
+      </div>
+      <div class="section-head"><h2>Leaderboard — Weekly</h2><span></span></div>
+      <div id="leaderboard"></div>
+    </div>
+
+    <!-- ===================== MESSAGES ===================== -->
+    <div class="page" id="messages">
+      <div class="section-head"><h2>Messages</h2><span></span></div>
+      <div class="msg-shell">
+        <div class="msg-list" id="msgList"></div>
+        <div class="msg-window">
+          <div class="msg-window-head">
+            <span>@rosaline <span style="color:var(--green); font-size:11px; font-weight:600;">● online</span></span>
+            <div class="msg-head-actions">
+              <button class="icon-btn" title="Search in conversation"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.3-4.3"/></svg></button>
+              <button class="icon-btn" title="Voice call"><svg viewBox="0 0 24 24"><path d="M4 5c0 8 7 15 15 15l3-4-6-3-2 2c-2-1-4-3-5-5l2-2-3-6Z"/></svg></button>
+              <button class="icon-btn" title="Video call"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="12" height="12" rx="2"/><path d="m15 10 6-3v10l-6-3Z"/></svg></button>
+            </div>
+          </div>
+          <div class="msg-body">
+            <div class="bubble them">did you finish Marigold House??</div>
+            <div class="bubble me">yes!! no spoilers I'm hosting a room tonight
+              <div class="bubble-reactions"><span>🔥 2</span></div>
+            </div>
+            <div class="bubble them">okay I'll be there, saving my reaction for the room 🔥</div>
+            <div class="voice-note-bubble">
+              <button class="play-btn">▶</button>
+              <div class="waveform" id="waveformDemo"></div>
+              <span style="font-size:10.5px; color:var(--text-dim);">0:14</span>
+            </div>
+            <div class="bubble me">deal. 8pm your time?</div>
+            <div class="read-receipt">Seen · 2m ago</div>
+            <div class="typing-indicator"><span></span><span></span><span></span></div>
+          </div>
+          <div class="msg-input">
+            <button class="icon-btn" title="Attach file or photo"><svg viewBox="0 0 24 24"><path d="M21 11.5 12.5 20a4.5 4.5 0 0 1-6.4-6.4L14 5.7a3 3 0 0 1 4.2 4.2l-7.9 7.9a1.5 1.5 0 0 1-2.1-2.1l7-7"/></svg></button>
+            <input type="text" placeholder="Message @rosaline…">
+            <button class="icon-btn" title="Record voice note"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+            <button class="btn btn-blue">Send</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== PROFILE ===================== -->
+    <div class="page" id="profile">
+      <div class="profile-cover"></div>
+      <div class="profile-head">
+        <div class="profile-avatar">R</div>
+        <div class="profile-meta">
+          <h2>Rosaline Marsh <span id="verifiedSlot"></span> <span style="font-size:12px; color:var(--gold); font-weight:700;">★ 2,140</span></h2>
+          <span>@rosaline · joined March 2025 · Loves Thrillers · Christopher Nolan fan</span>
+        </div>
+        <button class="verify-cta" id="verifyCta" onclick="openModal('verifyModal')">
+          <svg width="14" height="14" viewBox="0 0 24 24" style="stroke:var(--blue); stroke-width:2.2; fill:none;"><path d="M12 2 4 6v6c0 5 3.5 8 8 10 4.5-2 8-5 8-10V6Z"/></svg>
+          Get verified
+        </button>
+      </div>
+      <div class="tabs">
+        <div class="tab active" data-tab="diary">Diary</div>
+        <div class="tab" data-tab="reviews">Reviews</div>
+        <div class="tab" data-tab="watchlist">Watchlist</div>
+        <div class="tab" data-tab="achievements">Achievements</div>
+        <div class="tab" data-tab="friends">Friends</div>
+        <div class="tab" data-tab="hosted">Hosted Rooms</div>
+      </div>
+      <div class="stats-strip">
+        <div class="stat red"><b>147</b><span>Movies</span></div>
+        <div class="stat green"><b>38</b><span>Rooms hosted</span></div>
+        <div class="stat blue"><b>412</b><span>Followers</span></div>
+        <div class="stat"><b>12</b><span>Achievements</span></div>
+      </div>
+
+      <div class="tab-panel active" data-panel="diary">
+        <div class="diary-list" id="profileDiary"></div>
+      </div>
+
+      <div class="tab-panel" data-panel="reviews">
+        <div class="diary-list" id="profileReviews"></div>
+      </div>
+
+      <div class="tab-panel" data-panel="watchlist">
+        <div class="row" id="profileWatchlist"></div>
+      </div>
+
+      <div class="tab-panel" data-panel="achievements">
+        <div class="ach-grid" id="achGrid"></div>
+      </div>
+
+      <div class="tab-panel" data-panel="friends">
+        <div class="friend-search">
+          <input type="text" placeholder="Search people by username or taste…">
+          <button class="btn btn-primary">Search</button>
+        </div>
+        <div class="section-head"><h2 style="font-size:15px;">Pending requests</h2><span></span></div>
+        <div id="friendRequests" style="margin-bottom:24px;"></div>
+        <div class="section-head"><h2 style="font-size:15px;">Your friends</h2><span></span></div>
+        <div id="friendList"></div>
+      </div>
+
+      <div class="tab-panel" data-panel="hosted">
+        <div class="rooms-grid" id="hostedRooms"></div>
+      </div>
+    </div>
+
+    <!-- ===================== REWARDS ===================== -->
+    <div class="page" id="rewards">
+      <div class="section-head"><h2>Daily Login Streak</h2><span>Day 4 of 7 · come back tomorrow for 20 pts</span></div>
+      <div class="streak-row" id="streakRow"></div>
+      <div class="streak-milestones">
+        <div class="milestone-chip"><b>30-Day</b>Premium profile item</div>
+        <div class="milestone-chip"><b>60-Day</b>Animated badge</div>
+        <div class="milestone-chip"><b>100-Day</b>Exclusive theme</div>
+      </div>
+
+      <div class="section-head"><h2>Invite friends</h2><span>7 of 20 invited</span></div>
+      <div class="referral-box">
+        <input type="text" value="mova.app/invite/rosaline-8k2" readonly>
+        <button class="btn btn-blue" onclick="this.textContent='Copied ✓'; setTimeout(()=>this.textContent='Copy link',1500)">Copy link</button>
+      </div>
+      <div class="referral-ladder" id="referralLadder"></div>
+
+      <div class="ad-card">
+        <div class="info"><b>Watch a short ad</b>Earn bonus points — always optional, never interrupts chats or calls</div>
+        <button class="btn btn-green" onclick="watchAd(this)">▶ Watch (+10 pts)</button>
+      </div>
+
+      <div class="section-head"><h2>Points Shop</h2><span>★ 2,140 pts available</span></div>
+      <div class="shop-tabs" id="shopTabs">
+        <div class="filter-chip active" data-shop="profile">Profile</div>
+        <div class="filter-chip" data-shop="chat">Chat</div>
+        <div class="filter-chip" data-shop="community">Community</div>
+        <div class="filter-chip" data-shop="special">Special</div>
+      </div>
+      <div class="shop-grid" id="shopGrid"></div>
+    </div>
+
+    <!-- ===================== PREMIUM ===================== -->
+    <div class="page" id="premium">
+      <div class="section-head"><h2>Premium</h2><span>Support MOVA and unlock more</span></div>
+      <div class="plans">
+        <div class="plan-card">
+          <h3>Free</h3>
+          <div class="plan-price">$0</div>
+          <ul><li>Diary & reviews</li><li>3 active rooms</li><li>Standard badges</li><li>Banner ads</li></ul>
+          <button class="btn btn-ghost" style="width:100%;">Current plan</button>
+        </div>
+        <div class="plan-card highlight">
+          <h3>Premium</h3>
+          <div class="plan-price">$6.99<span>/mo</span></div>
+          <ul><li>No ads</li><li>Unlimited rooms</li><li>Exclusive badges & emojis</li><li>Animated profile & themes</li><li>Advanced statistics</li><li>Priority support</li></ul>
+          <button class="btn btn-primary" style="width:100%;">Upgrade</button>
+        </div>
+        <div class="plan-card">
+          <h3>Premium Annual</h3>
+          <div class="plan-price">$59<span>/yr</span></div>
+          <ul><li>Everything in Premium</li><li>2 months free</li><li>Founding member badge</li></ul>
+          <button class="btn btn-ghost" style="width:100%;">Upgrade</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Join request modal (viewer side) -->
+<div class="modal-overlay" id="joinModal">
+  <div class="modal-box">
+    <h3 id="joinModalTitle">Request to join</h3>
+    <p>This host approves everyone before they can enter — so the room stays a space people actually want to be in.</p>
+    <div class="waiting-pulse"><span class="waiting-dot"></span> Waiting for the host to approve you…</div>
+    <button class="btn btn-ghost modal-close" onclick="closeModal('joinModal')">Cancel request</button>
+  </div>
+</div>
+
+<!-- Host approval modal (host side) -->
+<div class="modal-overlay" id="hostModal">
+  <div class="modal-box">
+    <h3>Requests to join</h3>
+    <p>3 people want in. Only they can see this — no one enters until you say yes.</p>
+    <div class="request-row"><span class="who">@juno</span><div class="request-actions"><button class="req-btn req-accept">Accept</button><button class="req-btn req-decline">Decline</button></div></div>
+    <div class="request-row"><span class="who">@vik</span><div class="request-actions"><button class="req-btn req-accept">Accept</button><button class="req-btn req-decline">Decline</button></div></div>
+    <div class="request-row"><span class="who">@dee</span><div class="request-actions"><button class="req-btn req-accept">Accept</button><button class="req-btn req-decline">Decline</button></div></div>
+    <button class="btn btn-ghost modal-close" onclick="closeModal('hostModal')">Close</button>
+  </div>
+</div>
+
+<!-- Host a Room modal -->
+<div class="modal-overlay" id="hostRoomModal">
+  <div class="host-modal-box">
+    <div class="host-tabs">
+      <div class="host-tab active" data-host-tab="instant" onclick="hostTabSwitch('instant')">Instant Room</div>
+      <div class="host-tab" data-host-tab="scheduled" onclick="hostTabSwitch('scheduled')">Scheduled Room</div>
+    </div>
+    <div class="host-form">
+      <div class="host-panel active" data-host-panel="instant">
+        <div class="field"><label>Room name</label><input type="text" placeholder="e.g. Friday Movie Night"></div>
+        <div class="field"><label>Platform</label>
+          <select><option>Netflix</option><option>Prime Video</option><option>Disney+</option><option>Apple TV+</option><option>JioHotstar</option><option>Sony LIV</option><option>Zee5</option><option>Other</option></select>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-chip active">Public</div><div class="toggle-chip">Private</div><div class="toggle-chip">Friends Only</div>
+        </div>
+        <div class="field"><label>Max participants</label>
+          <select><option>10</option><option>25</option><option>50</option></select>
+        </div>
+        <button class="btn btn-primary" style="width:100%;" onclick="closeModal('hostRoomModal')">Start now</button>
+      </div>
+      <div class="host-panel" data-host-panel="scheduled">
+        <div class="field"><label>Room name</label><input type="text" placeholder="e.g. Anime Watch Party"></div>
+        <div class="field"><label>Description</label><textarea rows="2" placeholder="What are you watching?"></textarea></div>
+        <div class="field-row">
+          <div class="field"><label>Date</label><input type="date"></div>
+          <div class="field"><label>Time</label><input type="time"></div>
+        </div>
+        <div class="field"><label>Time zone</label>
+          <select><option>GMT+5:30 (IST)</option><option>GMT-5:00 (EST)</option><option>GMT-8:00 (PST)</option><option>GMT+0:00 (UTC)</option></select>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-chip active">Public</div><div class="toggle-chip">Private</div>
+        </div>
+        <div class="field"><label>Max participants</label>
+          <select><option>10</option><option>25</option><option>50</option></select>
+        </div>
+        <button class="btn btn-primary" style="width:100%;" onclick="closeModal('hostRoomModal')">Schedule room</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Club detail modal -->
+<div class="modal-overlay" id="clubModal">
+  <div class="club-modal-box">
+    <div class="club-modal-banner" id="clubModalBanner">
+      <button class="close-x" onclick="closeModal('clubModal')">✕</button>
+    </div>
+    <div class="club-modal-head">
+      <h3 id="clubModalTitle">Marvel Universe Talk</h3>
+      <span id="clubModalMeta">14,203 members · Public Club</span>
+    </div>
+    <div class="club-tabs">
+      <div class="club-tab active" data-club-panel="chat">General Chat</div>
+      <div class="club-tab" data-club-panel="media">Media</div>
+      <div class="club-tab" data-club-panel="voice">Voice Channels</div>
+      <div class="club-tab" data-club-panel="announce">Announcements</div>
+      <div class="club-tab" data-club-panel="events">Events</div>
+      <div class="club-tab" data-club-panel="polls">Polls</div>
+      <div class="club-tab" data-club-panel="rules">Rules</div>
+      <div class="club-tab" data-club-panel="members">Members</div>
+    </div>
+    <div class="club-panel active" data-club-panel="chat">
+      <div class="bubble them" style="margin-bottom:8px;">phase 6 is going to break the internet</div>
+      <div class="bubble them" style="margin-bottom:8px;">no because the last trailer already did 😭</div>
+      <div class="bubble me">hot take incoming... 👇</div>
+    </div>
+    <div class="club-panel" data-club-panel="media">
+      <p style="font-size:12.5px; color:var(--text-dim);">Fan art, edits, and screenshots shared by members appear here.</p>
+    </div>
+    <div class="club-panel" data-club-panel="voice">
+      <div class="room-card" style="margin-bottom:10px;">
+        <div class="room-top"><span class="room-live"><span class="live-dot"></span>LIVE</span></div>
+        <h3 style="font-size:14px;">🔊 Debate Lounge</h3>
+        <div class="room-desc">6 people talking</div>
+      </div>
+    </div>
+    <div class="club-panel" data-club-panel="announce">
+      <p style="font-size:12.5px; color:var(--text-muted);"><b>📌 Pinned:</b> New trailer discussion thread every Friday — keep spoilers in the spoiler-tagged channel only.</p>
+    </div>
+    <div class="club-panel" data-club-panel="events">
+      <div class="room-card">
+        <div class="room-top"><span class="room-live" style="color:var(--gold)">UPCOMING</span></div>
+        <h3 style="font-size:14px;">Trailer Watch + React</h3>
+        <div class="room-desc">Saturday, 8:00 PM</div>
+        <div class="rsvp-row">
+          <button class="rsvp-btn">Going</button><button class="rsvp-btn">Interested</button><button class="rsvp-btn">Can't join</button>
+        </div>
+      </div>
+    </div>
+    <div class="club-panel" data-club-panel="polls">
+      <p style="font-size:13px; font-weight:700; margin-bottom:10px;">Best phase so far?</p>
+      <div class="rsvp-row"><button class="rsvp-btn">Phase 1</button><button class="rsvp-btn">Phase 3</button><button class="rsvp-btn">Phase 4</button></div>
+    </div>
+    <div class="club-panel" data-club-panel="rules">
+      <div class="rule-item">1. Spoilers go in spoiler-tagged threads only.</div>
+      <div class="rule-item">2. Debate the movies, not each other — no personal attacks.</div>
+      <div class="rule-item">3. No off-topic self-promotion or spam.</div>
+    </div>
+    <div class="club-panel" data-club-panel="members" id="clubMembersPanel"></div>
+  </div>
+</div>
+
+<!-- Create Club modal -->
+<div class="modal-overlay" id="createClubModal">
+  <div class="modal-box" style="width:380px;">
+    <h3>Create a Club</h3>
+    <p>Free accounts can create 1 club. Premium unlocks unlimited clubs, custom themes, and premium banners.</p>
+    <div class="field"><label>Club name</label><input type="text" placeholder="e.g. K-Drama Fanatics"></div>
+    <div class="field"><label>Description</label><textarea rows="2" placeholder="What's this club about?"></textarea></div>
+    <div class="toggle-row">
+      <div class="toggle-chip active">Public</div><div class="toggle-chip">Private</div>
+    </div>
+    <button class="btn btn-primary" style="width:100%; margin-bottom:8px;" onclick="closeModal('createClubModal')">Create Club</button>
+    <button class="btn btn-ghost modal-close" onclick="closeModal('createClubModal')">Cancel</button>
+  </div>
+</div>
+
+<!-- Profile verification modal -->
+<div class="modal-overlay" id="verifyModal">
+  <div class="modal-box" style="width:360px;">
+
+    <div class="verify-step active" data-step="intro">
+      <h3>Verify it's really you</h3>
+      <p>Take a quick photo matching a pose we show you. This confirms a real person is behind the profile — it's optional, but verified profiles get a badge and can join more rooms.</p>
+      <button class="btn btn-blue" style="width:100%; margin-bottom:8px;" onclick="verifyNext('pose')">Start verification</button>
+      <button class="btn btn-ghost modal-close" onclick="closeModal('verifyModal')">Not now</button>
+    </div>
+
+    <div class="verify-step" data-step="pose">
+      <div class="verify-progress"><span class="done"></span><span></span><span></span></div>
+      <h3 style="text-align:center;">Match this pose</h3>
+      <div class="pose-diagram">🤚</div>
+      <p style="text-align:center;">Hold your hand up like this in front of your camera, with your face visible.</p>
+      <button class="btn btn-blue" style="width:100%;" onclick="verifyNext('scanning')">Take photo</button>
+    </div>
+
+    <div class="verify-step" data-step="scanning">
+      <div class="verify-progress"><span class="done"></span><span class="done"></span><span></span></div>
+      <div class="waiting-pulse"><span class="waiting-dot"></span> Checking your photo matches your profile picture…</div>
+    </div>
+
+    <div class="verify-step" data-step="done">
+      <div class="verify-success">
+        <div class="big-check"><svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg></div>
+        <h3>You're verified</h3>
+        <p>A verified badge now shows on your profile. This never affects your profile photo or bio — it's just a private confirmation, no one sees the verification photo itself.</p>
+        <button class="btn btn-primary" style="width:100%;" onclick="closeModal('verifyModal')">Done</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+  function openModal(id){ document.getElementById(id).classList.add('open'); }
+
+  function verifyNext(step){
+    const modal = document.getElementById('verifyModal');
+    modal.querySelectorAll('.verify-step').forEach(s => s.classList.remove('active'));
+    modal.querySelector(`.verify-step[data-step="${step}"]`).classList.add('active');
+    if(step === 'scanning'){ setTimeout(() => verifyNext('done'), 1600); }
+    if(step === 'done'){
+      document.getElementById('verifiedSlot').innerHTML = `<span class="verified-badge" title="Verified profile"><svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg></span>`;
+      document.getElementById('verifyCta').style.display = 'none';
+    }
+  }
+
+  // ---- empty state preview toggle ----
+  const emptyStates = {
+    diaryList: `<div class="empty-state"><div class="emoji">🎬</div><h3>Nothing logged yet</h3><p>Log your first movie or show to start building your taste profile — friends and taste-match unlock from here.</p><button class="btn btn-primary">Log your first movie</button></div>`,
+    msgList: `<div class="empty-state" style="border:none; padding:40px 16px;"><div class="emoji">💬</div><h3 style="font-size:14px;">No messages yet</h3><p style="font-size:11.5px;">Find someone with a high taste match and say hi.</p></div>`,
+    roomsHome: `<div class="empty-state"><div class="emoji">📺</div><h3>No live rooms nearby yet</h3><p>Be the first — host a room and put up a poll if you don't have anyone lined up to watch with.</p><button class="btn btn-primary" onclick="go('rooms')">Host a room</button></div>`,
+  };
+  let emptyPreview = false;
+  document.getElementById('emptyToggle').addEventListener('click', function(){
+    emptyPreview = !emptyPreview;
+    this.textContent = emptyPreview ? 'Preview: has activity' : 'Preview: new user';
+    ['diaryList','msgList','roomsHome'].forEach(id => {
+      const el = document.getElementById(id);
+      if(emptyPreview){ el.dataset.saved = el.innerHTML; el.innerHTML = emptyStates[id]; }
+      else if(el.dataset.saved){ el.innerHTML = el.dataset.saved; }
+    });
+  });
+</script>
+
+<script>
+  // ---- navigation ----
+  function go(pageId){
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById(pageId).classList.add('active');
+    document.querySelector(`.nav-item[data-page="${pageId}"]`).classList.add('active');
+    window.scrollTo(0,0);
+  }
+  document.querySelectorAll('.nav-item').forEach(btn => {
+    btn.addEventListener('click', () => go(btn.dataset.page));
+  });
+  document.querySelectorAll('.filter-chip').forEach(chip => {
+    chip.addEventListener('click', function(){
+      this.parentElement.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      this.classList.add('active');
+    });
+  });
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', function(){
+      const scope = this.closest('#profile');
+      scope.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      scope.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      this.classList.add('active');
+      scope.querySelector(`.tab-panel[data-panel="${this.dataset.tab}"]`).classList.add('active');
+    });
+  });
+
+  // toggle chips (Public/Private/Friends Only) — one active per row (event delegation covers dynamic content too)
+  document.addEventListener('click', (e) => {
+    const chip = e.target.closest('.toggle-chip');
+    if(chip){
+      chip.closest('.toggle-row').querySelectorAll('.toggle-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+    }
+    const rsvp = e.target.closest('.rsvp-btn');
+    if(rsvp){
+      rsvp.closest('.rsvp-row').querySelectorAll('.rsvp-btn').forEach(b => b.classList.remove('selected'));
+      rsvp.classList.add('selected');
+    }
+  });
+
+  // Host Room modal tabs
+  function hostTabSwitch(tab){
+    document.querySelectorAll('.host-tab').forEach(t => t.classList.toggle('active', t.dataset.hostTab === tab));
+    document.querySelectorAll('.host-panel').forEach(p => p.classList.toggle('active', p.dataset.hostPanel === tab));
+  }
+
+  // Club detail modal tabs
+  document.querySelectorAll('.club-tab').forEach(tab => {
+    tab.addEventListener('click', function(){
+      document.querySelectorAll('.club-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.club-panel').forEach(p => p.classList.remove('active'));
+      this.classList.add('active');
+      document.querySelector(`.club-panel[data-club-panel="${this.dataset.clubPanel}"]`).classList.add('active');
+    });
+  });
+
+  // ---- notification bell ----
+  const bellBtn = document.getElementById('bellBtn');
+  const bellDropdown = document.getElementById('bellDropdown');
+  bellBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    bellDropdown.classList.toggle('open');
+    document.getElementById('bellBadge').style.display = 'none';
+  });
+  document.addEventListener('click', (e) => {
+    if(!bellDropdown.contains(e.target) && e.target !== bellBtn){ bellDropdown.classList.remove('open'); }
+  });
+  document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', (e) => { if(e.target === overlay) overlay.classList.remove('open'); });
+  });
+
+  // ---- mock data ----
+  const posters = [
+    {title:"Glass Horizon", meta:"Sci-Fi · 2025", rating:"8.7", a:"#3b2f6e"},
+    {title:"Low Tide", meta:"Thriller · 2024", rating:"8.2", a:"#5a2020"},
+    {title:"Paper Moths", meta:"Drama · 2025", rating:"7.9", a:"#264a3b"},
+    {title:"Nightshift Diner", meta:"Comedy · 2026", rating:"8.0", a:"#6e5a1a"},
+    {title:"The Long Static", meta:"Horror · 2025", rating:"8.5", a:"#2a2a2a"},
+    {title:"Cobalt Season", meta:"Action · 2024", rating:"7.6", a:"#1e3a5a"},
+    {title:"Marigold House", meta:"Drama · 2026", rating:"8.9", a:"#5a3a1e"},
+    {title:"Static Bloom", meta:"Sci-Fi · 2025", rating:"7.8", a:"#3a1e5a"},
+  ];
+  function posterEl(p){
+    const el = document.createElement('div'); el.className = 'poster';
+    el.style.setProperty('--pa', p.a);
+    el.innerHTML = `<span class="rating">★ ${p.rating}</span><div><div class="title">${p.title}</div><div class="meta">${p.meta}</div></div>`;
+    return el;
+  }
+  document.getElementById('posterRow').append(...posters.map(posterEl));
+
+  // Platform badges are plain text + a neutral dot only — no third-party logos or brand colors,
+  // so MOVA never displays trademarked marks it doesn't have rights to.
+  const platformDots = {
+    "Netflix":"#8a8a8a", "Prime Video":"#8a8a8a", "Disney+":"#8a8a8a", "Apple TV+":"#8a8a8a",
+    "JioHotstar":"#8a8a8a", "Sony LIV":"#8a8a8a", "Zee5":"#8a8a8a", "Other":"#8a8a8a"
+  };
+  function platformBadge(name){
+    return `<span class="platform-badge"><span class="platform-dot" style="background:${platformDots[name]||'#8a8a8a'}"></span>${name}</span>`;
+  }
+
+  const rooms = [
+    {title:"Marigold House — First watch", desc:"Hosted by @rosaline · spoiler-safe", platform:"Netflix", seats:"6/8 seats", avatars:["R","J","K","+3"], permission:true},
+    {title:"Cobalt Season rewatch", desc:"Friends only · voice chat on", platform:"Prime Video", seats:"4/6 seats", avatars:["A","T","+8"], permission:true},
+    {title:"Sunday Horror Club", desc:"Public · anonymous messages on", platform:"Disney+", seats:"11/20 seats", avatars:["M","D","V","+15"], permission:false},
+    {title:"Low Tide — Finale night", desc:"Private · quiz after credits", platform:"JioHotstar", seats:"3/4 seats", avatars:["N","P"], permission:true},
+  ];
+  const avatarColors = ['var(--red)','var(--blue)','var(--green)','#6e5a1a'];
+  function roomEl(r){
+    const el = document.createElement('div'); el.className = 'room-card';
+    const avatarsHtml = r.avatars.map((a,i) => {
+      if(a.startsWith('+')) return `<span class="more">${a}</span>`;
+      const speak = i === 0 ? ' speaking' : '';
+      return `<span class="${speak.trim()}" style="background:${avatarColors[i % avatarColors.length]}" title="${i===0 ? 'speaking now' : ''}">${a}</span>`;
+    }).join('');
+    const joinAction = r.permission
+      ? `openModal('joinModal')`
+      : `this.textContent='Joined ✓'; this.disabled=true; this.style.background='var(--green)';`;
+    el.innerHTML = `
+      <div class="room-top"><span class="room-live"><span class="live-dot"></span>LIVE</span>${platformBadge(r.platform)}</div>
+      <h3>${r.title}</h3><div class="room-desc">${r.desc}${r.permission ? ' · approval required' : ''}</div>
+      <div class="avatars">${avatarsHtml}</div>
+      <div class="room-footer"><span class="seats">${r.seats}</span><button class="join-btn" onclick="${joinAction}">${r.permission ? 'Request to join' : 'Join room'}</button></div>`;
+    return el;
+  }
+  document.getElementById('roomsHome').append(...rooms.slice(0,2).map(roomEl));
+  document.getElementById('roomsFull').append(...rooms.map(roomEl));
+
+  const users = [
+    {name:"@filmfanatic", meta:"92% match · 210 shared logs", color:"var(--red)"},
+    {name:"@kel_m", meta:"88% match · 180 shared logs", color:"var(--blue)"},
+    {name:"@juno", meta:"85% match · 140 shared logs", color:"var(--green)"},
+    {name:"@vik", meta:"81% match · 96 shared logs", color:"#6e5a1a"},
+  ];
+  users.forEach(u => {
+    const el = document.createElement('div');
+    el.style = 'flex:0 0 180px; background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:16px; text-align:center;';
+    el.innerHTML = `<div class="avatar-sm" style="margin:0 auto 10px; width:48px; height:48px; font-size:16px; background:${u.color};">${u.name[1].toUpperCase()}</div>
+      <div style="font-weight:700; font-size:13px;">${u.name}</div>
+      <div style="font-size:11px; color:var(--text-dim); margin-top:3px;">${u.meta}</div>`;
+    document.getElementById('trendingUsers').appendChild(el);
+  });
+
+  const diaryEntries = [
+    {title:"Marigold House", meta:"Drama · watched 2 days ago", rating:"9.2", a:"#5a3a1e"},
+    {title:"Glass Horizon", meta:"Sci-Fi · watched 5 days ago", rating:"8.0", a:"#3b2f6e"},
+    {title:"Low Tide", meta:"Thriller · watched 1 week ago", rating:"8.5", a:"#5a2020"},
+    {title:"The Long Static", meta:"Horror · watched 2 weeks ago", rating:"7.8", a:"#2a2a2a"},
+    {title:"Cobalt Season", meta:"Action · rewatch #2", rating:"8.1", a:"#1e3a5a"},
+  ];
+  function diaryEl(d){
+    const el = document.createElement('div'); el.className = 'diary-entry';
+    el.innerHTML = `<div class="thumb" style="--pa:${d.a}"></div>
+      <div class="info"><h4>${d.title}</h4><span>${d.meta}</span></div>
+      <div class="rating">★ ${d.rating}</div>`;
+    return el;
+  }
+  document.getElementById('diaryList').append(...diaryEntries.map(diaryEl));
+  document.getElementById('profileDiary').append(...diaryEntries.map(diaryEl));
+
+  document.getElementById('trendingReviews').append(...[
+    {title:"Marigold House", meta:'@rosaline rated 9.2 · "the score alone earns this a rewatch"', a:"#5a3a1e"},
+    {title:"Low Tide", meta:'@kel_m rated 8.5 · "that finale twist floored the whole room"', a:"#5a2020"},
+  ].map(diaryEl));
+  document.getElementById('profileReviews').append(...[
+    {title:"Marigold House", meta:'Rated 9.2 · "the score alone earns this a rewatch"', a:"#5a3a1e"},
+    {title:"Glass Horizon", meta:'Rated 8.0 · "sharp first half, lost me at the end"', a:"#3b2f6e"},
+  ].map(diaryEl));
+  document.getElementById('profileWatchlist').append(...[
+    {title:"Nightshift Diner", meta:"Comedy · 2026", rating:"8.0", a:"#6e5a1a"},
+    {title:"Static Bloom", meta:"Sci-Fi · 2025", rating:"7.8", a:"#3a1e5a"},
+    {title:"Paper Moths", meta:"Drama · 2025", rating:"7.9", a:"#264a3b"},
+  ].map(posterEl));
+
+  // ---- achievements ----
+  const achievements = [
+    {icon:"🎬", title:"First Movie", desc:"Log your first watch", earned:true},
+    {icon:"💯", title:"100 Movies Logged", desc:"Reached 100 diary entries", earned:true},
+    {icon:"✍️", title:"Movie Critic", desc:"Write 25 reviews", earned:true},
+    {icon:"🧠", title:"Quiz Champion", desc:"Win a weekly quiz", earned:true},
+    {icon:"🎉", title:"Super Host", desc:"Host 25 watch rooms", earned:true},
+    {icon:"🧭", title:"Movie Explorer", desc:"Log 10 different genres", earned:true},
+    {icon:"🔥", title:"Streak Master", desc:"30-day watch streak", earned:false},
+    {icon:"🤝", title:"Taste Twin", desc:"Reach 95% match with a friend", earned:false},
+  ];
+  achievements.forEach(a => {
+    const el = document.createElement('div');
+    el.className = 'ach-card' + (a.earned ? '' : ' locked');
+    el.innerHTML = `<div class="ach-icon">${a.icon}</div><h4>${a.title}</h4><span>${a.earned ? a.desc : 'Locked · ' + a.desc}</span>`;
+    document.getElementById('achGrid').appendChild(el);
+  });
+
+  // ---- friends panel ----
+  const pendingRequests = [
+    {name:"@juno", meta:"85% taste match · 3 mutual friends"},
+    {name:"@vik", meta:"81% taste match · 1 mutual friend"},
+  ];
+  pendingRequests.forEach(r => {
+    const el = document.createElement('div'); el.className = 'friend-row';
+    el.innerHTML = `<div class="avatar-sm" style="background:var(--blue);">${r.name[1].toUpperCase()}</div>
+      <div class="info"><b>${r.name}</b><span>${r.meta}</span></div>
+      <div class="request-actions"><button class="req-btn req-accept">Accept</button><button class="req-btn req-decline">Decline</button></div>`;
+    document.getElementById('friendRequests').appendChild(el);
+  });
+  const friendsList = [
+    {name:"@filmfanatic", meta:"92% match · friends since Apr 2025", verified:true},
+    {name:"@kel_m", meta:"88% match · friends since Jun 2025", verified:true},
+    {name:"@dee", meta:"79% match · friends since Jan 2026", verified:false},
+  ];
+  const badgeHtml = `<span class="verified-badge" title="Verified profile"><svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg></span>`;
+  friendsList.forEach(f => {
+    const el = document.createElement('div'); el.className = 'friend-row';
+    el.innerHTML = `<div class="avatar-sm" style="background:var(--green);">${f.name[1].toUpperCase()}</div>
+      <div class="info"><b>${f.name}${f.verified ? badgeHtml : ''}</b><span>${f.meta}</span></div>
+      <button class="btn btn-ghost" style="font-size:11.5px; padding:6px 12px;">Message</button>`;
+    document.getElementById('friendList').appendChild(el);
+  });
+
+  document.getElementById('hostedRooms').append(...rooms.map(roomEl));
+
+  // accept/decline removes the row, everywhere these buttons appear (requests + notifications)
+  document.addEventListener('click', (e) => {
+    if(e.target.classList.contains('req-accept') || e.target.classList.contains('req-decline')){
+      const row = e.target.closest('.friend-row') || e.target.closest('.notif-row') || e.target.closest('.request-row');
+      if(row) row.style.opacity = '0';
+      setTimeout(() => row && row.remove(), 200);
+    }
+  });
+
+  const lb = [
+    {name:"@filmfanatic", pts:"18,240"}, {name:"@rosaline", pts:"16,910"}, {name:"@kel_m", pts:"15,300"},
+    {name:"@juno", pts:"14,120"}, {name:"@vik", pts:"12,880"}, {name:"@dee", pts:"11,540"},
+  ];
+  lb.forEach((r,i) => {
+    const el = document.createElement('div'); el.className = 'lb-row';
+    el.innerHTML = `<div class="lb-rank">${i+1}</div><div class="lb-name">${r.name}</div><div class="lb-pts">${r.pts} pts</div>`;
+    document.getElementById('leaderboard').appendChild(el);
+  });
+
+  const chats = [
+    {name:"@rosaline", preview:"deal. 8pm your time?", active:true},
+    {name:"@kel_m", preview:"that ending though 😭"},
+    {name:"@juno", preview:"quiz night tonight?"},
+    {name:"Marigold House Room", preview:"@vik: turn it up"},
+  ];
+  chats.forEach(c => {
+    const el = document.createElement('div'); el.className = 'msg-item' + (c.active ? ' active' : '');
+    el.innerHTML = `<div class="avatar-sm" style="background:var(--blue);">${c.name[1].toUpperCase()}</div>
+      <div><div class="name">${c.name}</div><div class="preview">${c.preview}</div></div>`;
+    document.getElementById('msgList').appendChild(el);
+  });
+
+  // ---- voice note waveform (visual only) ----
+  const wf = document.getElementById('waveformDemo');
+  if(wf){
+    for(let i=0;i<18;i++){
+      const bar = document.createElement('span');
+      bar.style.height = (4 + Math.random()*14) + 'px';
+      wf.appendChild(bar);
+    }
+  }
+
+  // ---- CLUBS ----
+  const clubs = [
+    {name:"Marvel Universe Talk", members:"14,203", role:"member", ca:"#5a1e1e", cb:"#141414"},
+    {name:"DC Fanatics", members:"9,840", role:"owner", ca:"#1e2a5a", cb:"#141414"},
+    {name:"Anime Nights", members:"22,110", role:"vip", ca:"#3a1e5a", cb:"#141414"},
+    {name:"K-Drama Fanatics", members:"31,402", role:"admin", ca:"#5a1e4a", cb:"#141414"},
+    {name:"90s Cinema Club", members:"6,204", role:"mod", ca:"#5a3a1e", cb:"#141414"},
+    {name:"Horror Uncut", members:"11,900", role:"member", ca:"#1e1e1e", cb:"#0a0a0a"},
+  ];
+  const roleLabels = {owner:"Owner", admin:"Admin", mod:"Moderator", vip:"VIP Member", member:"Member"};
+  document.getElementById('clubsGrid').append(...clubs.map(c => {
+    const el = document.createElement('div'); el.className = 'club-card';
+    el.onclick = () => openClub(c);
+    el.innerHTML = `
+      <div class="club-banner" style="--ca:${c.ca}; --cb:${c.cb}"></div>
+      <div class="club-body">
+        <h3>${c.name}</h3>
+        <div class="club-meta">${c.members} members</div>
+        <span class="role-badge role-${c.role}">${roleLabels[c.role]}</span>
+      </div>`;
+    return el;
+  }));
+
+  const clubMembers = [
+    {name:"@rosaline", role:"owner"}, {name:"@juno", role:"admin"}, {name:"@vik", role:"mod"},
+    {name:"@filmfanatic", role:"vip"}, {name:"@kel_m", role:"member"}, {name:"@dee", role:"new"},
+  ];
+  const roleLabelsFull = {owner:"Owner", admin:"Admin", mod:"Moderator", vip:"VIP Member", member:"Member", new:"New Member"};
+  function openClub(c){
+    document.getElementById('clubModalTitle').textContent = c.name;
+    document.getElementById('clubModalMeta').textContent = `${c.members} members · Public Club`;
+    document.getElementById('clubModalBanner').style.setProperty('--ca', c.ca);
+    document.getElementById('clubModalBanner').style.setProperty('--cb', c.cb);
+    const panel = document.getElementById('clubMembersPanel');
+    panel.innerHTML = '';
+    clubMembers.forEach(m => {
+      const row = document.createElement('div'); row.className = 'club-member-row';
+      row.innerHTML = `<div class="avatar-sm" style="width:28px; height:28px; font-size:11px; background:var(--blue);">${m.name[1].toUpperCase()}</div>
+        <span class="name">${m.name}</span><span class="role-badge role-${m.role}">${roleLabelsFull[m.role]}</span>`;
+      panel.appendChild(row);
+    });
+    openModal('clubModal');
+  }
+
+  // ---- REWARDS: daily streak ----
+  const streakDays = [
+    {label:"Day 1", pts:5, done:true}, {label:"Day 2", pts:10, done:true},
+    {label:"Day 3", pts:15, done:true}, {label:"Day 4", pts:20, today:true},
+    {label:"Day 5", pts:30}, {label:"Day 6", pts:40}, {label:"Day 7", pts:60},
+  ];
+  document.getElementById('streakRow').append(...streakDays.map(d => {
+    const el = document.createElement('div'); el.className = 'streak-day' + (d.today?' today':'') + (d.done?' done':'');
+    el.innerHTML = `<b>+${d.pts}</b><span>${d.label}</span>`;
+    return el;
+  }));
+
+  // ---- REWARDS: referral ladder ----
+  const referralSteps = [
+    {n:5, reward:"Bonus + Badge", reached:true}, {n:10, reward:"Premium Theme", reached:true},
+    {n:15, reward:"Profile Effect", reached:false}, {n:20, reward:"1mo Prime + Founder", reached:false},
+  ];
+  document.getElementById('referralLadder').append(...referralSteps.map(s => {
+    const el = document.createElement('div'); el.className = 'ladder-step' + (s.reached?' reached':'');
+    el.innerHTML = `<b>${s.n}</b><span>${s.reward}</span>`;
+    return el;
+  }));
+
+  // ---- REWARDS: points shop ----
+  const shopItems = {
+    profile: [
+      {icon:"🎨", name:"Sunset Theme", price:"400 pts"}, {icon:"🖼️", name:"Gold Frame", price:"250 pts"},
+      {icon:"✨", name:"Animated PFP", price:"600 pts", lock:"Prime only"}, {icon:"🏷️", name:"Neon Name Color", price:"150 pts", owned:true},
+    ],
+    chat: [
+      {icon:"💬", name:"Bubble Style: Glass", price:"120 pts"}, {icon:"😄", name:"Exclusive GIF Pack", price:"200 pts"},
+      {icon:"🎭", name:"Reaction Pack: Drama", price:"90 pts", owned:true}, {icon:"🎟️", name:"Custom Stickers", price:"180 pts"},
+    ],
+    community: [
+      {icon:"🏅", name:"Club Founder Badge", price:"Event only", lock:"Event only"}, {icon:"🎫", name:"Quiz Night Ticket", price:"50 pts"},
+      {icon:"🎀", name:"Limited Decoration", price:"300 pts"},
+    ],
+    special: [
+      {icon:"🎄", name:"Anniversary Collectible", price:"Achievement only", lock:"Achievement only"}, {icon:"🌟", name:"Founding Member Item", price:"500 pts"},
+      {icon:"🎁", name:"Prime Discount Coupon", price:"350 pts"},
+    ],
+  };
+  function renderShop(cat){
+    const grid = document.getElementById('shopGrid');
+    grid.innerHTML = '';
+    shopItems[cat].forEach(i => {
+      const el = document.createElement('div'); el.className = 'shop-item';
+      const footer = i.owned
+        ? `<div class="owned-tag">✓ Owned</div>`
+        : i.lock
+          ? `<div class="lock-tag">${i.lock}</div>`
+          : `<div class="price">${i.price}</div><button>Unlock</button>`;
+      el.innerHTML = `<div class="shop-icon">${i.icon}</div><h4>${i.name}</h4>${footer}`;
+      grid.appendChild(el);
+    });
+  }
+  renderShop('profile');
+  document.querySelectorAll('#shopTabs .filter-chip').forEach(tab => {
+    tab.addEventListener('click', function(){
+      document.querySelectorAll('#shopTabs .filter-chip').forEach(t => t.classList.remove('active'));
+      this.classList.add('active');
+      renderShop(this.dataset.shop);
+    });
+  });
+
+  // ---- REWARDS: watch ad ----
+  let userPoints = 2140;
+  function watchAd(btn){
+    btn.disabled = true; btn.textContent = 'Playing ad… (3s)';
+    setTimeout(() => {
+      userPoints += 10;
+      document.querySelectorAll('.pts').forEach(p => p.textContent = `★ ${userPoints.toLocaleString()} pts`);
+      btn.textContent = '+10 pts added ✓';
+      setTimeout(() => { btn.disabled = false; btn.textContent = '▶ Watch (+10 pts)'; }, 1500);
+    }, 3000);
+  }
+
+  // ---- ROOMS: scheduled with live countdown ----
+  const scheduled = [
+    {title:"Friday Movie Night", desc:"Hosted by @rosaline · Netflix", target: Date.now() + 1000*60*60*26, rsvp:"Going"},
+    {title:"Anime Watch Party", desc:"Hosted by @juno · Crunchyroll (Other)", target: Date.now() + 1000*60*60*3, rsvp:"Interested"},
+  ];
+  function renderScheduled(){
+    const grid = document.getElementById('scheduledRooms');
+    grid.innerHTML = '';
+    scheduled.forEach(s => {
+      const diff = s.target - Date.now();
+      const h = Math.max(0, Math.floor(diff / 3600000));
+      const m = Math.max(0, Math.floor((diff % 3600000) / 60000));
+      const el = document.createElement('div'); el.className = 'room-card';
+      el.innerHTML = `
+        <div class="room-top"><span class="countdown-badge">Starts in ${h}h ${m}m</span></div>
+        <h3>${s.title}</h3><div class="room-desc">${s.desc}</div>
+        <div class="rsvp-row">
+          <button class="rsvp-btn ${s.rsvp==='Going'?'selected':''}">Going</button>
+          <button class="rsvp-btn ${s.rsvp==='Interested'?'selected':''}">Interested</button>
+          <button class="rsvp-btn ${s.rsvp==="Can't Join"?'selected':''}">Can't join</button>
+        </div>`;
+      grid.appendChild(el);
+    });
+  }
+  renderScheduled();
+  setInterval(renderScheduled, 60000);
+</script>
+
+</body>
+</html>
