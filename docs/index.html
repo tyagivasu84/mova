@@ -248,6 +248,7 @@
   .host-cam-controls{position:absolute; left:0; right:0; bottom:14px; display:flex; justify-content:center; gap:14px; z-index:3;}
   .cam-ctrl-btn{width:46px; height:46px; border-radius:50%; border:none; background:rgba(255,255,255,0.18); backdrop-filter:blur(8px); color:#fff; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center;}
   .cam-ctrl-btn.off{background:var(--red);}
+  .host-cam-status{display:none; text-align:center; font-size:12px; color:var(--text-muted); margin-top:10px; padding:8px 12px; background:var(--bg-card); border:1px solid var(--border); border-radius:8px;}
   .room-type-toggle{display:flex; background:var(--bg-card); border:1px solid var(--border); border-radius:100px; padding:4px; margin-top:14px; gap:4px;}
   .room-type-btn{flex:1; border:none; background:none; color:var(--text-dim); font-size:12px; font-weight:700; padding:9px 6px; border-radius:100px; cursor:pointer;}
   .room-type-btn.active{background:var(--blue); color:#fff;}
@@ -297,15 +298,35 @@
   .lb-pts{font-size:13px; font-weight:800; color:var(--gold);}
 
   /* premium */
-  .plans{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:20px; max-width:900px;}
-  .plan-card{background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:26px;}
-  .plan-card.highlight{border-color:var(--red); background:linear-gradient(160deg, rgba(229,9,20,0.08), var(--bg-card));}
-  .plan-card h3{font-size:16px; margin-bottom:6px;}
-  .plan-price{font-family:'Archivo Black'; font-size:34px; margin-bottom:14px;}
-  .plan-price span{font-size:13px; color:var(--text-dim); font-family:'Inter'; font-weight:400;}
-  .plan-card ul{list-style:none; margin-bottom:20px;}
-  .plan-card li{font-size:12.5px; color:var(--text-muted); padding:6px 0; display:flex; gap:8px;}
-  .plan-card li::before{content:"✓"; color:var(--green); font-weight:800;}
+  .plans{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:20px; max-width:1040px; align-items:start;}
+  .plan-card{position:relative; background:var(--bg-card); border:1px solid var(--border); border-radius:18px; padding:30px 26px; display:flex; flex-direction:column;}
+  #planCards .plan-card{cursor:pointer;}
+  .plan-card.highlight{border-color:var(--red); border-width:2px; background:linear-gradient(165deg, rgba(229,9,20,0.12), var(--bg-card) 55%); box-shadow:0 12px 40px rgba(229,9,20,0.14);}
+  .plan-badge{position:absolute; top:-13px; left:50%; transform:translateX(-50%); background:var(--red); color:#fff; font-size:10.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; padding:6px 16px; border-radius:100px; white-space:nowrap; box-shadow:0 4px 14px rgba(229,9,20,0.4);}
+  .plan-card h3{font-size:21px; margin-bottom:12px; font-weight:800;}
+  .plan-price{font-family:'Archivo Black'; font-size:44px; line-height:1; color:#fff; margin-bottom:6px; display:flex; align-items:flex-start; gap:2px;}
+  .plan-price .cur{font-size:26px; color:#fff; margin-top:4px;}
+  .plan-price .amt{color:#fff;}
+  .plan-period{font-size:11px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.1em; font-weight:700; margin-bottom:22px;}
+  .plan-features{list-style:none; margin:0 0 24px; padding:0; flex:1;}
+  .plan-features li{font-size:13px; color:var(--text-muted); padding:11px 0; display:flex; align-items:center; gap:11px; border-top:1px solid var(--border);}
+  .plan-features li:first-child{border-top:none;}
+  .plan-features li.excluded{color:var(--text-dim);}
+  .plan-features li .feat-ico{flex-shrink:0; width:17px; height:17px;}
+  .plan-features li .feat-ico.yes{color:var(--green);}
+  .plan-features li .feat-ico.no{color:var(--text-dim);}
+  .plan-btn-full{width:100%; padding:13px; font-size:13.5px; font-weight:800; letter-spacing:.03em;}
+
+  /* points packs keep the older compact look */
+  .points-plans{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:20px; max-width:900px;}
+  .points-plans .plan-card{padding:26px;}
+  .points-plans .plan-card h3{font-size:16px; margin-bottom:6px;}
+  .points-plans .plan-price{font-family:'Archivo Black'; font-size:34px; color:#fff;}
+  .points-plans .plan-price span{font-size:13px; color:var(--text-dim); font-family:'Inter'; font-weight:400;}
+  .points-plans .plan-card.highlight{border-color:var(--red); background:linear-gradient(160deg, rgba(229,9,20,0.08), var(--bg-card));}
+  .points-plans ul{list-style:none; margin-bottom:20px; padding:0;}
+  .points-plans li{font-size:12.5px; color:var(--text-muted); padding:6px 0; display:flex; gap:8px;}
+  .points-plans li::before{content:"✓"; color:var(--green); font-weight:800;}
 
   /* ===================== RESPONSIVE ===================== */
 
@@ -572,6 +593,53 @@
   .hc-btn.pressed{background:rgba(255,255,255,0.1); color:#fff;}
   .hc-btn.danger.pressed{background:var(--red); color:#fff;}
   .hc-btn.mod.pressed{background:var(--blue); color:#fff;}
+
+  /* =====================================================================
+     GROUP CALL — Google Meet / Houseparty style live grid
+     ===================================================================== */
+  .group-call{position:fixed; inset:0; z-index:500; background:#0a0a0b; display:none; flex-direction:column;}
+  .group-call.open{display:flex;}
+  .gc-topbar{display:flex; align-items:center; gap:14px; padding:14px 20px; border-bottom:2px solid var(--border);}
+  .gc-live{display:flex; align-items:center; gap:6px; font-size:11px; font-weight:800; color:var(--red); text-transform:uppercase; letter-spacing:.05em;}
+  .gc-title{flex:1; font-size:15px; font-weight:800;}
+  .gc-timer{font-size:13px; color:var(--text-muted); font-variant-numeric:tabular-nums;}
+  .gc-stage{flex:1; display:grid; gap:10px; padding:16px; overflow:auto; position:relative; align-content:center; justify-content:center;}
+  .gc-stage[data-count="1"]{grid-template-columns:minmax(0,900px);}
+  .gc-stage[data-count="4"]{grid-template-columns:repeat(2,minmax(0,1fr)); max-width:1100px; margin:0 auto; width:100%;}
+  .gc-stage[data-count="6"]{grid-template-columns:repeat(3,minmax(0,1fr)); max-width:1300px; margin:0 auto; width:100%;}
+  .gc-stage[data-count="9"]{grid-template-columns:repeat(3,minmax(0,1fr)); max-width:1300px; margin:0 auto; width:100%;}
+  .gc-tile{position:relative; aspect-ratio:16/10; background:var(--bg-card); border:2px solid var(--border); border-radius:14px; overflow:hidden; display:flex; align-items:center; justify-content:center; min-height:120px;}
+  .gc-tile.speaking{border-color:var(--green); box-shadow:0 0 0 2px var(--green), 0 0 22px rgba(35,165,90,0.35);}
+  .gc-video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
+  .gc-tile-avatar{width:74px; height:74px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'Archivo Black'; font-size:26px; color:#fff;}
+  .gc-tile-name{position:absolute; left:10px; bottom:9px; background:rgba(0,0,0,0.6); padding:4px 10px; border-radius:6px; font-size:12px; font-weight:700; display:flex; align-items:center; gap:6px;}
+  .gc-speaking-dot{width:6px; height:6px; border-radius:50%; background:var(--green); animation:pulse 1s infinite;}
+  .gc-tile-badges{position:absolute; top:9px; right:9px; display:flex; gap:5px;}
+  .gc-tile-badges span{background:rgba(0,0,0,0.55); border-radius:6px; padding:3px 6px; font-size:12px;}
+  .gc-float-react{position:absolute; bottom:10%; font-size:40px; animation:floatUp 2s ease-out forwards; pointer-events:none;}
+  @keyframes floatUp{0%{transform:translateY(0) scale(.5); opacity:0;} 20%{opacity:1; transform:translateY(-20px) scale(1.2);} 100%{transform:translateY(-260px) scale(1); opacity:0;}}
+  .gc-tray{display:flex; justify-content:center; gap:10px; padding:14px; border-top:2px solid var(--border); flex-wrap:wrap;}
+  .gc-ctrl{display:flex; flex-direction:column; align-items:center; gap:3px; background:var(--bg-card); border:2px solid var(--border); border-radius:14px; padding:9px 14px; min-width:60px; color:var(--text-muted); cursor:pointer; font-family:inherit;}
+  .gc-ctrl span{font-size:20px;}
+  .gc-ctrl small{font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:.03em;}
+  .gc-ctrl:hover{color:#fff; border-color:#555;}
+  .gc-ctrl.off{background:var(--red); border-color:var(--red); color:#fff;}
+  .gc-ctrl.on{background:var(--gold); border-color:var(--gold); color:#000;}
+  .gc-ctrl.gc-leave{background:var(--red); border-color:var(--red); color:#fff;}
+  .gc-ctrl.gc-leave:hover{background:#ff2733;}
+  .gc-sidepanel{position:absolute; top:0; right:0; bottom:0; width:320px; max-width:88vw; background:var(--bg-raised); border-left:2px solid var(--border); transform:translateX(100%); transition:transform .2s ease; display:flex; flex-direction:column; z-index:10;}
+  .gc-sidepanel.open{transform:translateX(0);}
+  .gc-panel-head{display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:2px solid var(--border); font-weight:800; font-size:14px;}
+  .gc-panel-body{flex:1; overflow-y:auto; padding:12px 16px; display:flex; flex-direction:column; gap:8px;}
+  .gc-person-row{display:flex; align-items:center; gap:10px; font-size:13px;}
+  .gc-person-name{flex:1; font-weight:600;}
+  .gc-chat-msg{font-size:12.5px; line-height:1.5; color:var(--text-muted);}
+  .gc-chat-me{color:#fff; text-align:right;}
+  .gc-panel-input{display:flex; gap:8px; padding:12px 16px; border-top:2px solid var(--border);}
+  .gc-panel-input input{flex:1; background:var(--bg-card); border:1px solid var(--border); border-radius:8px; padding:9px 12px; color:#fff; font-size:13px;}
+
+  .poll-option.voted{cursor:default;}
+
 </style>
 </head>
 <body>
@@ -885,56 +953,79 @@
 
     <!-- ===================== PREMIUM ===================== -->
     <div class="page" id="premium">
-      <div class="section-head"><h2>Premium</h2><span>Support CLUB and unlock more</span></div>
+      <div class="section-head"><h2>Premium</h2><span>Free gets you in the door. CineClub+ opens the archive, the rooms, and every pixel skin in the shop.</span></div>
       <div class="plans" id="planCards">
+
         <div class="plan-card">
           <h3>Free</h3>
-          <div class="plan-price">$0</div>
-          <ul><li>Diary & reviews</li><li>3 active rooms</li><li>Standard badges</li><li>Banner ads</li></ul>
-          <button class="btn btn-ghost plan-btn" id="planFreeBtn" style="width:100%;" onclick="showToast('This is your current plan')">Current plan</button>
+          <div class="plan-price"><span class="cur">₹</span><span class="amt">0</span></div>
+          <div class="plan-period">Forever</div>
+          <ul class="plan-features">
+            <li><svg class="feat-ico yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Movie diary (unlimited logs)</li>
+            <li><svg class="feat-ico yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Join up to 3 clubs</li>
+            <li><svg class="feat-ico yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Watch rooms (max 4 viewers)</li>
+            <li class="excluded"><svg class="feat-ico no" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>Pixel skin collection</li>
+            <li class="excluded"><svg class="feat-ico no" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>HD voice rooms</li>
+          </ul>
+          <button class="btn btn-ghost plan-btn plan-btn-full" id="planFreeBtn" onclick="showToast('This is your current plan')">Current Plan</button>
         </div>
+
         <div class="plan-card highlight">
-          <h3>Premium</h3>
-          <div class="plan-price">$6.99<span>/mo</span></div>
-          <ul><li>No ads</li><li>Unlimited rooms</li><li>Exclusive badges & emojis</li><li>Animated profile & themes</li><li>Advanced statistics</li><li>Priority support</li></ul>
-          <button class="btn btn-primary plan-btn" id="planPremiumBtn" style="width:100%;" onclick="upgradePlan('planPremiumBtn', 'Premium')">Upgrade</button>
+          <div class="plan-badge">★ Most Popular</div>
+          <h3>CineClub+</h3>
+          <div class="plan-price"><span class="cur">₹</span><span class="amt">149</span></div>
+          <div class="plan-period">Per month</div>
+          <ul class="plan-features">
+            <li><svg class="feat-ico yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Everything in Free</li>
+            <li><svg class="feat-ico yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Unlimited clubs &amp; rooms (50 viewers)</li>
+            <li><svg class="feat-ico yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Full pixel skin collection</li>
+            <li><svg class="feat-ico yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>HD voice rooms + screen share</li>
+            <li class="excluded"><svg class="feat-ico no" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>Analytics dashboard</li>
+          </ul>
+          <button class="btn btn-primary plan-btn plan-btn-full" id="planPremiumBtn" onclick="upgradePlan('planPremiumBtn', 'CineClub+')">Start Free Trial</button>
         </div>
+
         <div class="plan-card">
-          <h3>Premium Annual</h3>
-          <div class="plan-price">$59<span>/yr</span></div>
-          <ul><li>Everything in Premium</li><li>2 months free</li><li>Founding member badge</li></ul>
-          <button class="btn btn-ghost plan-btn" id="planAnnualBtn" style="width:100%;" onclick="upgradePlan('planAnnualBtn', 'Premium Annual')">Upgrade</button>
+          <h3>Director</h3>
+          <div class="plan-price"><span class="cur">₹</span><span class="amt">299</span></div>
+          <div class="plan-period">Per month</div>
+          <ul class="plan-features">
+            <li><svg class="feat-ico yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Everything in CineClub+</li>
+            <li><svg class="feat-ico yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Rooms up to 500 viewers</li>
+            <li><svg class="feat-ico yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Analytics: watch-time &amp; ratings</li>
+            <li><svg class="feat-ico yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Custom club domain + branding</li>
+            <li><svg class="feat-ico yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Priority support + API access</li>
+          </ul>
+          <button class="btn btn-ghost plan-btn plan-btn-full" id="planAnnualBtn" onclick="upgradePlan('planAnnualBtn', 'Director')">Upgrade to Director</button>
         </div>
+
       </div>
 
       <div class="section-head" style="margin-top:40px;"><h2>Buy Points</h2><span>Optional — top up if you don't want to wait or watch ads for them</span></div>
-      <div class="plans" style="max-width:900px;">
+      <div class="points-plans">
         <div class="plan-card">
           <h3>Starter Pack</h3>
           <div class="plan-price">500<span> pts</span></div>
           <ul><li>Host a couple of extra rooms</li><li>Unlock a themed badge</li></ul>
-          <div style="font-size:13px; color:var(--text-dim); margin-bottom:14px;">$1.99</div>
+          <div style="font-size:13px; color:var(--text-dim); margin-bottom:14px;">₹49</div>
           <button class="btn btn-ghost" style="width:100%;" onclick="buyPoints(500)">Buy</button>
         </div>
         <div class="plan-card highlight">
           <h3>Value Pack</h3>
           <div class="plan-price">2,500<span> pts</span></div>
           <ul><li>Best per-point value</li><li>Host rooms, unlock themes</li><li>Bonus +250 pts</li></ul>
-          <div style="font-size:13px; color:var(--text-dim); margin-bottom:14px;">$7.99</div>
+          <div style="font-size:13px; color:var(--text-dim); margin-bottom:14px;">₹199</div>
           <button class="btn btn-primary" style="width:100%;" onclick="buyPoints(2750)">Buy</button>
         </div>
         <div class="plan-card">
           <h3>Mega Pack</h3>
           <div class="plan-price">6,000<span> pts</span></div>
           <ul><li>For heavy hosts & club owners</li><li>Bonus +1,000 pts</li></ul>
-          <div style="font-size:13px; color:var(--text-dim); margin-bottom:14px;">$16.99</div>
+          <div style="font-size:13px; color:var(--text-dim); margin-bottom:14px;">₹399</div>
           <button class="btn btn-ghost" style="width:100%;" onclick="buyPoints(7000)">Buy</button>
         </div>
       </div>
-      <p style="font-size:11.5px; color:var(--text-dim); margin-top:14px; max-width:600px;">Points can also be earned for free — daily login, streaks, referrals, and watching optional ads. Buying points is entirely optional and never required to use CLUB.</p>
-
-      <div class="section-head" style="margin-top:40px;"><h2>Points Shop</h2><span>Spend your points on badges, themes & boosts</span></div>
-      <div class="shop-grid" id="pointsShopGrid"></div>
+      <p style="font-size:11.5px; color:var(--text-dim); margin-top:14px; max-width:600px;">Points can also be earned for free — daily login, streaks, referrals, and watching optional ads. Buying points is entirely optional and never required to use CLUB. Prices shown in INR, inclusive of taxes.</p>
     </div>
 
   </div>
@@ -981,7 +1072,7 @@
       <div class="host-cam-controls">
         <button class="cam-ctrl-btn" id="micToggleBtn" onclick="toggleHostMic(this)" title="Mute mic">🎤</button>
         <button class="cam-ctrl-btn" id="camToggleBtn" onclick="toggleHostCam(this)" title="Turn camera off">📷</button>
-        <button class="cam-ctrl-btn" onclick="flipHostCam(this)" title="Flip camera">🔄</button>
+        <button class="cam-ctrl-btn" id="flipCamBtn" onclick="flipHostCam(this)" title="Flip camera">🔄</button>
       </div>
     </div>
 
@@ -1055,7 +1146,7 @@
     </div>
     <div style="margin-left:auto; display:flex; gap:8px;">
       <button class="btn btn-ghost" id="clubManageBtn" onclick="openModal('clubManageModal')">⚙ Manage</button>
-      <button class="btn btn-primary" id="clubJoinBtn">Joined ✓</button>
+      <button class="btn btn-primary" id="clubJoinBtn" onclick="toggleClubJoin()">Joined ✓</button>
     </div>
   </div>
   <div class="club-tabs" id="clubTabs">
@@ -1178,7 +1269,7 @@
 
 <!-- Incoming call modal -->
 <div class="call-modal" id="incomingCallModal">
-  <div class="call-avatar-big">R</div>
+  <div class="call-avatar-big" id="callAvatarBig">R</div>
   <h3 id="callTitle">@rosaline</h3>
   <p id="callSubtitle">Incoming voice call…</p>
   <div class="call-actions">
@@ -1206,6 +1297,35 @@
       <button class="btn btn-primary" style="flex:1; font-size:12px; background:var(--red);" onclick="if(confirm('End this room for everyone?')){ closeModal('hostControlsModal'); showToast('Room ended'); }">End room</button>
     </div>
     <button class="btn btn-ghost modal-close" onclick="closeModal('hostControlsModal')">Close</button>
+  </div>
+</div>
+
+<!-- Google-Meet / Houseparty-style group call overlay -->
+<div class="group-call" id="groupCall">
+  <div class="gc-topbar">
+    <span class="gc-live"><span class="live-dot"></span> LIVE</span>
+    <span class="gc-title" id="gcTitle">Voice Room</span>
+    <span class="gc-timer" id="gcTimer">00:00</span>
+  </div>
+  <div class="gc-stage" id="gcStage"></div>
+  <div class="gc-tray">
+    <button class="gc-ctrl" id="gcMic" onclick="gcToggle(this,'mic')" title="Mute"><span>🎤</span><small>Mute</small></button>
+    <button class="gc-ctrl" id="gcCam" onclick="gcToggle(this,'cam')" title="Camera"><span>📷</span><small>Camera</small></button>
+    <button class="gc-ctrl" id="gcFlip" onclick="gcFlipCam()" title="Flip camera" style="display:none;"><span>🔄</span><small>Flip</small></button>
+    <button class="gc-ctrl" id="gcShare" onclick="gcShareScreen(this)" title="Share"><span>🖥</span><small>Share</small></button>
+    <button class="gc-ctrl" id="gcHand" onclick="gcRaiseHand(this)" title="Raise hand"><span>✋</span><small>Raise</small></button>
+    <button class="gc-ctrl" id="gcReact" onclick="gcReact()" title="React"><span>🎉</span><small>React</small></button>
+    <button class="gc-ctrl" id="gcPeople" onclick="gcTogglePanel('people')" title="People"><span>👥</span><small id="gcPeopleCount">1</small></button>
+    <button class="gc-ctrl" id="gcChat" onclick="gcTogglePanel('chat')" title="Chat"><span>💬</span><small>Chat</small></button>
+    <button class="gc-ctrl gc-leave" onclick="leaveGroupCall()" title="Leave"><span>📞</span><small>Leave</small></button>
+  </div>
+  <div class="gc-sidepanel" id="gcSidePanel">
+    <div class="gc-panel-head"><span id="gcPanelTitle">People</span><button class="icon-btn" onclick="gcTogglePanel(null)">✕</button></div>
+    <div class="gc-panel-body" id="gcPanelBody"></div>
+    <div class="gc-panel-input" id="gcPanelInput" style="display:none;">
+      <input type="text" id="gcChatInput" placeholder="Send to everyone…" onkeydown="if(event.key==='Enter'){gcSendChat();}">
+      <button class="btn btn-blue" onclick="gcSendChat()">Send</button>
+    </div>
   </div>
 </div>
 
@@ -1296,11 +1416,14 @@
       setTimeout(() => { ov.remove(); if(onComplete) onComplete(); }, 250);
     }, 1650);
   }
-  function joinRoomAnimated(btn, title){
+  function joinRoomAnimated(btn, title, isVideo){
     btn.disabled = true;
     showJoinOverlay(title, () => {
       btn.textContent = 'Joined ✓';
       btn.style.background = 'var(--green)';
+      btn.disabled = false;
+      // entering a room now drops you into the live Meet-style call grid
+      openGroupCall(title, isVideo !== false);
     });
   }
 
@@ -1315,13 +1438,22 @@
     syncCloudState();
   }
   function upgradePlan(btnId, planName){
-    ['planPremiumBtn','planAnnualBtn'].forEach(id => {
+    // each upgradeable plan button has its own natural label + accent when NOT the current plan
+    const planBtns = {
+      planPremiumBtn: { label:'Start Free Trial', cls:'btn btn-primary plan-btn plan-btn-full' },
+      planAnnualBtn:  { label:'Upgrade to Director', cls:'btn btn-ghost plan-btn plan-btn-full' }
+    };
+    Object.keys(planBtns).forEach(id => {
       const b = document.getElementById(id);
+      if(!b) return;
       const isThis = id === btnId;
-      b.textContent = isThis ? 'Current plan' : 'Upgrade';
-      b.className = isThis ? 'btn btn-primary plan-btn' : 'btn btn-ghost plan-btn';
+      b.textContent = isThis ? 'Current Plan' : planBtns[id].label;
+      b.className = isThis ? 'btn btn-primary plan-btn plan-btn-full' : planBtns[id].cls;
       b.disabled = isThis;
     });
+    // Free is no longer the current plan once you upgrade
+    const freeBtn = document.getElementById('planFreeBtn');
+    if(freeBtn){ freeBtn.textContent = 'Downgrade to Free'; freeBtn.disabled = false; }
     showToast(`Upgraded to ${planName} 🎉`);
   }
 
@@ -1340,8 +1472,9 @@
     try{ return JSON.parse(localStorage.getItem('club_shop_owned')) || []; }catch(e){ return []; }
   }
   function renderShop(){
-    const owned = loadOwnedShopItems();
     const grid = document.getElementById('pointsShopGrid');
+    if(!grid) return; // Points Shop section removed for now — safe no-op
+    const owned = loadOwnedShopItems();
     grid.innerHTML = '';
     SHOP_ITEMS.forEach(item => {
       const isOwned = owned.includes(item.id);
@@ -1746,6 +1879,22 @@
   // ---- Create Room modal — FaceTime-style camera pre-join ----
   let hostCamStream = null;
   let hostRoomType = 'video';
+  let hostFacing = 'user';
+  let hostCamOff = false;          // user explicitly turned camera off
+  let videoInputs = [];            // enumerated camera devices (for desktop flip)
+  let hostDeviceIndex = 0;
+
+  // Central helper: does this browser expose a camera API at all?
+  function cameraSupported(){
+    return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+  }
+  // Enumerate cameras once we have permission (labels only populate post-permission).
+  async function refreshVideoInputs(){
+    try{
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      videoInputs = devices.filter(d => d.kind === 'videoinput');
+    }catch(e){ videoInputs = []; }
+  }
 
   async function openCreateRoomModal(){
     openModal('createRoomModal');
@@ -1753,22 +1902,89 @@
     titleInput.value = '';
     titleInput.style.borderColor = '';
     document.querySelectorAll('#newRoomPlatformChips .filter-chip').forEach((c,i) => c.classList.toggle('active', i === 1)); // default back to Netflix
+    hostCamOff = false;
+    hostRoomType = 'video';
+    document.querySelectorAll('#roomTypeToggle .room-type-btn').forEach(b => b.classList.toggle('active', b.dataset.type === 'video'));
+    document.getElementById('startRoomBtn').textContent = 'Start Video Room';
+    resetCamButtons();
+    await startHostCam();
+  }
+
+  // Acquire (or re-acquire) the preview stream. Handles: no API, permission denied,
+  // no camera present, and camera busy — each with a clear message + fallback avatar.
+  async function startHostCam(){
     const video = document.getElementById('hostCamVideo');
     const preview = document.getElementById('hostCamPreview');
-    try{
-      hostCamStream = await navigator.mediaDevices.getUserMedia({ video:true, audio:true });
-      video.srcObject = hostCamStream;
-      preview.classList.add('cam-on');
-    }catch(e){
-      // no camera / permission denied — fall back to the avatar circle, rest of the flow still works
+    const fallback = document.getElementById('hostCamFallback');
+    if(!cameraSupported()){
       preview.classList.remove('cam-on');
+      setCamStatus('Camera not supported on this device');
+      return;
+    }
+    setCamStatus('Starting camera…');
+    try{
+      if(hostCamStream) hostCamStream.getTracks().forEach(t => t.stop());
+      const constraints = { audio:true, video: videoInputs.length && videoInputs[hostDeviceIndex]
+        ? { deviceId:{ exact: videoInputs[hostDeviceIndex].deviceId } }
+        : { facingMode: hostFacing } };
+      hostCamStream = await navigator.mediaDevices.getUserMedia(constraints);
+      video.srcObject = hostCamStream;
+      await video.play().catch(()=>{});
+      hostCamOff = false;
+      preview.classList.add('cam-on');
+      video.style.transform = hostFacing === 'environment' ? 'scaleX(1)' : 'scaleX(-1)';
+      setCamStatus('');
+      await refreshVideoInputs();
+      updateFlipVisibility();
+    }catch(e){
+      preview.classList.remove('cam-on');
+      if(e && (e.name === 'NotAllowedError' || e.name === 'SecurityError')){
+        setCamStatus('Camera blocked — allow access in your browser, then tap 📷');
+      } else if(e && e.name === 'NotFoundError'){
+        setCamStatus('No camera found — you can still start a voice room');
+      } else if(e && e.name === 'NotReadableError'){
+        setCamStatus('Camera is in use by another app');
+      } else {
+        setCamStatus('Camera unavailable — using your avatar');
+      }
     }
   }
+  // small status line under the preview (created lazily)
+  function setCamStatus(msg){
+    let el = document.getElementById('hostCamStatus');
+    if(!el){
+      el = document.createElement('div');
+      el.id = 'hostCamStatus';
+      el.className = 'host-cam-status';
+      const preview = document.getElementById('hostCamPreview');
+      preview.parentNode.insertBefore(el, preview.nextSibling);
+    }
+    el.textContent = msg || '';
+    el.style.display = msg ? 'block' : 'none';
+    // if permission was denied, offer a retry affordance
+    el.onclick = (msg && msg.includes('blocked')) ? () => startHostCam() : null;
+    el.style.cursor = (msg && msg.includes('blocked')) ? 'pointer' : 'default';
+  }
+  function resetCamButtons(){
+    const mic = document.getElementById('micToggleBtn');
+    const cam = document.getElementById('camToggleBtn');
+    mic.classList.remove('off'); mic.textContent = '🎤';
+    cam.classList.remove('off'); cam.textContent = '📷'; cam.style.opacity=''; cam.style.pointerEvents='';
+  }
+  function updateFlipVisibility(){
+    const flip = document.getElementById('flipCamBtn');
+    if(!flip) return;
+    // show flip only if a second camera exists, or on mobile where facingMode can switch
+    const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+    flip.style.display = (videoInputs.length > 1 || isMobile) ? 'flex' : 'none';
+  }
+
   function closeCreateRoomModal(){
     if(hostCamStream){
       hostCamStream.getTracks().forEach(t => t.stop());
       hostCamStream = null;
     }
+    setCamStatus('');
     closeModal('createRoomModal');
   }
   function toggleHostMic(btn){
@@ -1776,18 +1992,39 @@
     const muted = btn.classList.contains('off');
     btn.textContent = muted ? '🔇' : '🎤';
     if(hostCamStream) hostCamStream.getAudioTracks().forEach(t => t.enabled = !muted);
+    showToast(muted ? 'Mic muted' : 'Mic on');
   }
-  function toggleHostCam(btn){
+  async function toggleHostCam(btn){
     if(hostRoomType === 'voice') return; // camera is already off in voice mode
-    btn.classList.toggle('off');
-    const camOff = btn.classList.contains('off');
-    btn.textContent = camOff ? '📷' : '📷';
     const preview = document.getElementById('hostCamPreview');
-    if(hostCamStream) hostCamStream.getVideoTracks().forEach(t => t.enabled = !camOff);
-    preview.classList.toggle('cam-on', !camOff && !!hostCamStream);
+    // turning back ON after an off / denied state re-acquires the stream
+    if(hostCamOff || !hostCamStream){
+      btn.classList.remove('off');
+      btn.textContent = '📷';
+      await startHostCam();
+      return;
+    }
+    // turning OFF: disable the track and reveal the avatar
+    hostCamOff = true;
+    btn.classList.add('off');
+    btn.textContent = '🚫';
+    hostCamStream.getVideoTracks().forEach(t => t.enabled = false);
+    preview.classList.remove('cam-on');
+    setCamStatus('');
   }
-  function flipHostCam(btn){
-    showToast('Switched camera');
+  // FaceTime-style flip: cycle through real devices on desktop, toggle facingMode on mobile.
+  async function flipHostCam(btn){
+    if(!hostCamStream && !hostCamOff){ showToast('Camera not active'); return; }
+    if(videoInputs.length > 1){
+      hostDeviceIndex = (hostDeviceIndex + 1) % videoInputs.length;
+      await startHostCam();
+      const label = videoInputs[hostDeviceIndex].label || `Camera ${hostDeviceIndex+1}`;
+      showToast(label.length > 24 ? label.slice(0,24)+'…' : label);
+    } else {
+      hostFacing = hostFacing === 'user' ? 'environment' : 'user';
+      await startHostCam();
+      showToast(hostFacing === 'user' ? 'Front camera' : 'Back camera');
+    }
   }
   function selectRoomType(btn, type){
     hostRoomType = type;
@@ -1801,12 +2038,16 @@
       camBtn.style.opacity = '0.4';
       camBtn.style.pointerEvents = 'none';
       if(hostCamStream) hostCamStream.getVideoTracks().forEach(t => t.enabled = false);
+      setCamStatus('Voice room — camera off');
     } else {
       camBtn.style.opacity = '';
       camBtn.style.pointerEvents = '';
-      if(hostCamStream){
+      if(hostCamStream && !hostCamOff){
         hostCamStream.getVideoTracks().forEach(t => t.enabled = true);
         preview.classList.add('cam-on');
+        setCamStatus('');
+      } else {
+        startHostCam();
       }
     }
   }
@@ -1833,6 +2074,8 @@
     const homeGrid = document.getElementById('roomsHome');
     if(homeGrid) homeGrid.prepend(roomEl(newRoom));
     showToast(`${hostRoomType === 'voice' ? 'Voice' : 'Video'} room started 🎬`);
+    // hand the host straight into their live room
+    openGroupCall(title, hostRoomType === 'video');
   }
 
   function roomEl(r){
@@ -1844,9 +2087,11 @@
       const speak = i === 0 ? ' speaking' : '';
       return `<span class="${speak.trim()}" style="background:${avatarColors[i % avatarColors.length]}" title="${i===0 ? 'speaking now' : ''}">${a}</span>`;
     }).join('');
+    // game rooms & watch rooms default to video grid; explicitly-voice rooms use audio-only tiles
+    const isVideo = !/voice/i.test(r.desc);
     const joinAction = r.permission
       ? `openModal('joinModal')`
-      : `joinRoomAnimated(this, '${r.title.replace(/'/g, "\\'")}')`;
+      : `joinRoomAnimated(this, '${r.title.replace(/'/g, "\\'")}', ${isVideo})`;
     el.innerHTML = `
       <div class="room-top"><span class="room-live"><span class="live-dot"></span>LIVE</span>
         <span style="display:flex; align-items:center; gap:6px;">${r.platform ? platformBadge(r.platform) : ''}${r.premium ? '<span class="lock-tag">★ Premium</span>' : ''}</span>
@@ -2266,7 +2511,9 @@
     });
   });
 
+  let activeClub = null;
   function openClubDetail(c){
+    activeClub = c;
     document.getElementById('clubDetailHero').style.setProperty('--ca', c.ca);
     document.getElementById('clubDetailHero').style.setProperty('--cb', c.cb);
     document.getElementById('clubDetailLogo').style.setProperty('--ca', c.ca);
@@ -2274,9 +2521,32 @@
     document.getElementById('clubDetailLogo').textContent = c.name[0];
     document.getElementById('clubDetailName').textContent = c.name;
     document.getElementById('clubDetailMeta').textContent = `${c.members} members · ${c.priv}`;
-    document.getElementById('clubJoinBtn').textContent = c.mine ? 'Joined ✓' : 'Join Club';
+    const joinBtn = document.getElementById('clubJoinBtn');
+    joinBtn.textContent = c.mine ? 'Joined ✓' : 'Join Club';
+    joinBtn.className = c.mine ? 'btn btn-ghost' : 'btn btn-primary';
     document.getElementById('clubManageBtn').style.display = c.mine ? 'inline-block' : 'none';
     document.getElementById('clubDetail').classList.add('open');
+  }
+  // BUGFIX: the club Join button in the detail view had no handler at all.
+  // Now it actually joins the club, moves it into "My Clubs", and re-renders the grids.
+  function toggleClubJoin(){
+    if(!activeClub) return;
+    activeClub.mine = !activeClub.mine;
+    const joinBtn = document.getElementById('clubJoinBtn');
+    joinBtn.textContent = activeClub.mine ? 'Joined ✓' : 'Join Club';
+    joinBtn.className = activeClub.mine ? 'btn btn-ghost' : 'btn btn-primary';
+    document.getElementById('clubManageBtn').style.display = activeClub.mine ? 'inline-block' : 'none';
+    refreshClubGrids();
+    showToast(activeClub.mine ? `Joined ${activeClub.name} 🎉` : `Left ${activeClub.name}`);
+  }
+  function refreshClubGrids(){
+    const my = document.getElementById('myClubsGrid');
+    const all = document.getElementById('allClubsGrid');
+    my.innerHTML = ''; all.innerHTML = '';
+    const mine = clubs.filter(c => c.mine);
+    my.append(...(mine.length ? mine.map(clubCardEl)
+      : [Object.assign(document.createElement('div'), {className:'empty-state', innerHTML:'<div class="emoji">🏛</div><h3>No clubs yet</h3><p>Join one below to see it here.</p>'})]));
+    all.append(...clubs.map(clubCardEl));
   }
   function closeClubDetail(){ document.getElementById('clubDetail').classList.remove('open'); }
 
@@ -2288,11 +2558,31 @@
       document.querySelector(`.club-tab-panel[data-cpanel="${this.dataset.ctab}"]`).classList.add('active');
     });
   });
+  // per-channel message stores so switching channels actually changes what you see
+  const channelMessages = {
+    'general':  [{me:false,t:'welcome to the club! rules are pinned above 📌'},{me:false,t:"who's hosting the finale watch party this week?"}],
+    'spoilers': [{me:false,t:'⚠ spoilers ahead — the twist at 1:42 destroyed me'}],
+    'memes':    [{me:false,t:'dropped a new edit in media 😂'}],
+  };
+  let activeChannel = 'general';
+  function switchChannel(row, name){
+    // voice channels open the call grid instead of a text view
+    if(row.dataset.voice){ openGroupCall(name.replace(/^🔊\s*/,'')); return; }
+    document.querySelectorAll('.channel-row').forEach(r=>r.classList.remove('active'));
+    row.classList.add('active');
+    activeChannel = name;
+    const body = document.getElementById('clubChatBody');
+    body.innerHTML = (channelMessages[name] || []).map(m =>
+      `<div class="msg-row${m.me?' me-row':''}"><div class="bubble ${m.me?'me':'them'}">${m.t}</div></div>`).join('');
+    document.getElementById('clubChatInput').placeholder = `Message #${name}…`;
+    body.scrollTop = body.scrollHeight;
+  }
   document.querySelectorAll('.channel-row').forEach(row => {
-    row.addEventListener('click', function(){
-      this.parentElement.querySelectorAll('.channel-row').forEach(r=>r.classList.remove('active'));
-      this.classList.add('active');
-    });
+    const label = row.textContent.trim();
+    const isVoice = label.includes('🔊');
+    if(isVoice) row.dataset.voice = '1';
+    const chanName = label.replace(/^[^\sa-zA-Z]*\s*/,'');
+    row.addEventListener('click', () => switchChannel(row, isVoice ? label : chanName));
   });
 
   // club media / announcements / members mock content
@@ -2332,14 +2622,39 @@
     showToast('Event created');
   }
 
+  // BUGFIX: polls used to just paint a preset % on click and never actually counted a vote —
+  // brand-new polls (0%) stayed frozen at 0. Now each option carries a live vote count,
+  // clicking casts one vote, percentages recompute, and the poll locks so you can't double-vote.
+  let pollIdSeq = 0;
   function pollCardEl(p){
-    const el = document.createElement('div'); el.className = 'poll-card';
-    el.innerHTML = `<h4>${p.q}</h4>` + p.opts.map(o => `
-      <div class="poll-option" onclick="this.querySelector('.poll-fill').style.width='${o.pct}%'; this.style.borderColor='var(--blue)';">
-        <div class="poll-fill" style="width:0%; transition:width .4s ease;"></div>
-        <div class="txt"><span>${o.t}</span><span>${o.pct}%</span></div>
-      </div>`).join('') + `<div class="poll-meta">${p.votes} · ends in 2 days</div>`;
+    p._id = 'poll' + (++pollIdSeq);
+    p._voted = false;
+    // seed vote counts from initial percentages (so demo polls look populated)
+    const base = p.opts.reduce((s,o)=>s+(o.pct||0),0) || 1;
+    p.opts.forEach(o => { o.votes = Math.max(0, Math.round((o.pct||0)/base * 300)); });
+    const el = document.createElement('div'); el.className = 'poll-card'; el.id = p._id;
+    renderPoll(el, p);
+    el._poll = p;
     return el;
+  }
+  function renderPoll(el, p){
+    const total = p.opts.reduce((s,o)=>s+o.votes,0) || 1;
+    el.innerHTML = `<h4>${p.q}</h4>` + p.opts.map((o,i) => {
+      const pct = Math.round(o.votes/total*100);
+      return `<div class="poll-option${p._voted?' voted':''}" onclick="castVote('${p._id}',${i})">
+        <div class="poll-fill" style="width:${p._voted?pct:0}%;"></div>
+        <div class="txt"><span>${o.t}</span><span>${p._voted?pct+'%':'Vote'}</span></div>
+      </div>`;
+    }).join('') + `<div class="poll-meta">${total} vote${total===1?'':'s'} · ${p._voted?'you voted ✓':'tap to vote'} · ends in 2 days</div>`;
+  }
+  const pollRegistry = {};
+  function castVote(id, idx){
+    const el = document.getElementById(id); if(!el) return;
+    const p = el._poll; if(p._voted) return;
+    p.opts[idx].votes++;
+    p._voted = true;
+    renderPoll(el, p);
+    showToast('Vote counted ✓');
   }
   const clubPollsData = [
     {q:"What should we watch for next week's club night?", opts:[{t:"Marigold House rewatch", pct:54},{t:"Something new — surprise pick", pct:31},{t:"Fan vote on Discord", pct:15}], votes:"312 votes"},
@@ -2363,12 +2678,15 @@
     const input = document.getElementById('clubChatInput');
     const text = input.value.trim();
     if(!text) return;
+    const chan = (activeChannel || 'general').replace(/^🔊\s*/,'');
+    (channelMessages[chan] = channelMessages[chan] || []).push({me:true, t:text});
     const row = document.createElement('div');
     row.className = 'msg-row me-row';
     row.innerHTML = `<div class="bubble me">${text}</div>`;
-    document.getElementById('clubChatBody').appendChild(row);
+    const body = document.getElementById('clubChatBody');
+    body.appendChild(row);
     input.value = '';
-    document.getElementById('clubChatBody').scrollTop = document.getElementById('clubChatBody').scrollHeight;
+    body.scrollTop = body.scrollHeight;
   }
 
   function createNewClub(){
@@ -2424,18 +2742,39 @@
 
   // ================= CALLS =================
   let callTimer = null, callSeconds = 0;
+  // BUGFIX: the call modal was hard-coded to "@rosaline" no matter which chat you were in.
+  // Now it uses the currently-active conversation, and the avatar matches too.
   function startCall(kind){
-    document.getElementById('callTitle').textContent = '@rosaline';
-    document.getElementById('callSubtitle').textContent = kind === 'video' ? 'Incoming video call…' : 'Incoming voice call…';
+    const who = activeChat || '@rosaline';
+    document.getElementById('callTitle').textContent = who;
+    document.getElementById('callAvatarBig').textContent = who[1] ? who[1].toUpperCase() : who[0].toUpperCase();
+    document.getElementById('callSubtitle').textContent = kind === 'video' ? 'Calling…' : 'Calling…';
     document.getElementById('incomingCallModal').classList.add('open');
     window._pendingCallKind = kind;
+    window._pendingCallWho = who;
   }
   function acceptCall(){
     document.getElementById('incomingCallModal').classList.remove('open');
-    document.getElementById('callActiveBar').classList.add('open');
-    callSeconds = 0;
-    updateCallLabel();
-    callTimer = setInterval(() => { callSeconds++; updateCallLabel(); }, 1000);
+    const who = window._pendingCallWho || activeChat || '@rosaline';
+    if(window._pendingCallKind === 'video'){
+      // a 1:1 video call opens the full call view with your real camera —
+      // reuse the group-call grid but with just you + the person you're calling
+      openOneToOneCall(who, true);
+    } else {
+      document.getElementById('callActiveBar').classList.add('open');
+      callSeconds = 0;
+      updateCallLabel();
+      callTimer = setInterval(() => { callSeconds++; updateCallLabel(); }, 1000);
+    }
+  }
+  // 1:1 call = the same live call view, seeded with only two tiles
+  async function openOneToOneCall(who, video){
+    const initial = who[1] ? who[1].toUpperCase() : who[0].toUpperCase();
+    GC_ONE_TO_ONE = [
+      {name:'You', color:'var(--blue)', me:true, speaking:false, muted:false, cam:false, hand:false},
+      {name:who, color:'var(--red)', speaking:true, muted:false, cam:false, hand:false},
+    ];
+    await openGroupCall(who, video, GC_ONE_TO_ONE);
   }
   function updateCallLabel(){
     const m = String(Math.floor(callSeconds/60)).padStart(2,'0');
@@ -2474,6 +2813,205 @@
   function cancelRecording(){
     clearInterval(recTimer);
     document.getElementById('recordingBar').classList.remove('open');
+  }
+
+  // ================= GROUP CALL (Google Meet / Houseparty style) =================
+  const GC_PEOPLE = [
+    {name:'You',        color:'var(--blue)',  me:true,  speaking:false, muted:false, cam:false, hand:false},
+    {name:'@juno',      color:'var(--red)',   speaking:true,  muted:false, cam:false, hand:false},
+    {name:'@vik',       color:'var(--green)', speaking:false, muted:true,  cam:false, hand:false},
+    {name:'@kel_m',     color:'#6e5a1a',      speaking:false, muted:false, cam:false, hand:true},
+    {name:'@dee',       color:'#3a1e5a',      speaking:false, muted:false, cam:false, hand:false},
+    {name:'@filmfan',   color:'#1e3a5a',      speaking:false, muted:true,  cam:false, hand:false},
+  ];
+  let gcTimer = null, gcSeconds = 0, gcStream = null, gcPeople = [], gcSpeakInterval = null, gcPanel = null;
+  let gcFacing = 'user', gcDeviceIndex = 0;
+  let GC_ONE_TO_ONE = null;
+
+  async function openGroupCall(title, video, roster){
+    gcPeople = JSON.parse(JSON.stringify(roster || GC_PEOPLE));
+    gcPeople[0].cam = false; // set true only once a stream is actually live
+    document.getElementById('gcTitle').textContent = title || 'Voice Room';
+    document.getElementById('groupCall').classList.add('open');
+    const camBtn = document.getElementById('gcCam');
+    camBtn.classList.toggle('off', !video);
+    // try real camera for the "You" tile if this is a video call
+    if(video){
+      await gcAcquireCam();
+    } else {
+      camBtn.classList.add('off');
+    }
+    renderGcStage();
+    gcSeconds = 0; updateGcTimer();
+    gcTimer = setInterval(() => { gcSeconds++; updateGcTimer(); }, 1000);
+    // simulate people speaking in turns so tiles light up like a real call
+    gcSpeakInterval = setInterval(() => {
+      gcPeople.forEach((p,i) => { if(i>0) p.speaking = false; });
+      const others = gcPeople.map((p,i)=>i).filter(i=>i>0 && !gcPeople[i].muted);
+      if(others.length){ gcPeople[others[Math.floor(Math.random()*others.length)]].speaking = true; }
+      renderGcStage();
+    }, 2200);
+  }
+
+  // Acquire the local camera+mic for the call. Returns true on success.
+  async function gcAcquireCam(){
+    const camBtn = document.getElementById('gcCam');
+    if(!cameraSupported()){ showToast('Camera not supported here'); gcPeople[0].cam=false; camBtn.classList.add('off'); return false; }
+    try{
+      if(gcStream) gcStream.getTracks().forEach(t=>t.stop());
+      let vids = [];
+      try{ vids = (await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==='videoinput'); }catch(e){}
+      const constraints = { audio:true, video: vids.length && vids[gcDeviceIndex]
+        ? { deviceId:{ exact: vids[gcDeviceIndex].deviceId } } : { facingMode:gcFacing } };
+      gcStream = await navigator.mediaDevices.getUserMedia(constraints);
+      gcPeople[0].cam = true;
+      camBtn.classList.remove('off');
+      camBtn.querySelector('span').textContent = '📷';
+      // reveal flip if more than one camera or on mobile
+      const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+      document.getElementById('gcFlip').style.display = (vids.length > 1 || isMobile) ? 'flex' : 'none';
+      renderGcStage();
+      return true;
+    }catch(e){
+      gcPeople[0].cam = false;
+      camBtn.classList.add('off');
+      if(e && (e.name === 'NotAllowedError' || e.name === 'SecurityError')) showToast('Camera blocked — allow access, then tap Camera');
+      else if(e && e.name === 'NotFoundError') showToast('No camera found — you can still talk');
+      else if(e && e.name === 'NotReadableError') showToast('Camera busy in another app');
+      else showToast('Camera unavailable');
+      renderGcStage();
+      return false;
+    }
+  }
+
+  function updateGcTimer(){
+    const m = String(Math.floor(gcSeconds/60)).padStart(2,'0');
+    const s = String(gcSeconds%60).padStart(2,'0');
+    document.getElementById('gcTimer').textContent = `${m}:${s}`;
+  }
+  function renderGcStage(){
+    const stage = document.getElementById('gcStage');
+    const n = gcPeople.length;
+    stage.dataset.count = n <= 1 ? 1 : n <= 4 ? 4 : n <= 6 ? 6 : 9;
+    stage.innerHTML = gcPeople.map((p,i) => {
+      const initials = p.me ? 'R' : (p.name[1] ? p.name[1].toUpperCase() : p.name[0].toUpperCase());
+      const camTile = (p.me && p.cam)
+        ? `<video class="gc-video" autoplay playsinline muted id="gcSelfVideo"></video>`
+        : `<div class="gc-tile-avatar" style="background:${p.color}">${initials}</div>`;
+      return `<div class="gc-tile${p.speaking?' speaking':''}">
+        ${camTile}
+        <div class="gc-tile-badges">${p.hand?'<span class="gc-hand">✋</span>':''}${p.muted?'<span class="gc-muted">🔇</span>':''}</div>
+        <div class="gc-tile-name">${p.me?'You':p.name}${p.speaking?' <span class="gc-speaking-dot"></span>':''}</div>
+      </div>`;
+    }).join('');
+    attachGcSelfVideo();
+    document.getElementById('gcPeopleCount').textContent = n;
+    if(gcPanel === 'people') renderGcPanel();
+  }
+  // Re-attach the live stream to the freshly-rendered <video>. Because renderGcStage rebuilds
+  // the DOM each call, the srcObject must be re-bound every time or the tile shows blank.
+  function attachGcSelfVideo(){
+    if(!gcStream) return;
+    const v = document.getElementById('gcSelfVideo');
+    if(v){
+      v.srcObject = gcStream;
+      v.style.transform = gcFacing === 'environment' ? 'scaleX(1)' : 'scaleX(-1)';
+      v.play().catch(()=>{});
+    }
+  }
+  async function gcToggle(btn, kind){
+    if(kind==='mic'){
+      btn.classList.toggle('off');
+      const off = btn.classList.contains('off');
+      gcPeople[0].muted = off;
+      btn.querySelector('span').textContent = off ? '🔇' : '🎤';
+      if(gcStream) gcStream.getAudioTracks().forEach(t=>t.enabled=!off);
+      showToast(off ? 'Muted' : 'Unmuted');
+      renderGcStage();
+      return;
+    }
+    if(kind==='cam'){
+      const currentlyOff = btn.classList.contains('off');
+      if(currentlyOff){
+        // turning camera ON — (re)acquire if needed, else just re-enable the track
+        if(!gcStream){ await gcAcquireCam(); }
+        else { gcStream.getVideoTracks().forEach(t=>t.enabled=true); gcPeople[0].cam=true; btn.classList.remove('off'); }
+      } else {
+        // turning camera OFF — disable track, show avatar
+        btn.classList.add('off');
+        gcPeople[0].cam = false;
+        if(gcStream) gcStream.getVideoTracks().forEach(t=>t.enabled=false);
+      }
+      renderGcStage();
+    }
+  }
+  // Live-call camera flip (front/back on mobile, next device on desktop).
+  async function gcFlipCam(){
+    if(!gcStream){ showToast('Turn your camera on first'); return; }
+    let vids = [];
+    try{ vids = (await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==='videoinput'); }catch(e){}
+    if(vids.length > 1){ gcDeviceIndex = (gcDeviceIndex + 1) % vids.length; }
+    else { gcFacing = gcFacing === 'user' ? 'environment' : 'user'; }
+    const ok = await gcAcquireCam();
+    if(ok) showToast(vids.length > 1 ? 'Switched camera' : (gcFacing === 'user' ? 'Front camera' : 'Back camera'));
+  }
+  function gcShareScreen(btn){
+    if(navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia){
+      navigator.mediaDevices.getDisplayMedia({video:true})
+        .then(s=>{ showToast('Screen sharing started'); btn.classList.add('off');
+          s.getVideoTracks()[0].onended = ()=>{ btn.classList.remove('off'); showToast('Screen sharing stopped'); }; })
+        .catch(()=> showToast('Screen share cancelled'));
+    } else { showToast('Screen share not supported here'); }
+  }
+  function gcRaiseHand(btn){
+    btn.classList.toggle('on');
+    gcPeople[0].hand = btn.classList.contains('on');
+    renderGcStage();
+    showToast(gcPeople[0].hand ? '✋ Hand raised' : 'Hand lowered');
+  }
+  function gcReact(){
+    const emojis = ['🎉','🔥','😂','❤️','👏','🙌'];
+    const e = emojis[Math.floor(Math.random()*emojis.length)];
+    const f = document.createElement('div');
+    f.className = 'gc-float-react'; f.textContent = e;
+    f.style.left = (20 + Math.random()*60) + '%';
+    document.getElementById('gcStage').appendChild(f);
+    setTimeout(()=>f.remove(), 2000);
+  }
+  function gcTogglePanel(which){
+    const panel = document.getElementById('gcSidePanel');
+    if(gcPanel === which || which === null){ gcPanel = null; panel.classList.remove('open'); return; }
+    gcPanel = which;
+    panel.classList.add('open');
+    document.getElementById('gcPanelTitle').textContent = which === 'chat' ? 'In-call chat' : 'People';
+    document.getElementById('gcPanelInput').style.display = which === 'chat' ? 'flex' : 'none';
+    if(which === 'chat'){ document.getElementById('gcPanelBody').innerHTML = '<div class="gc-chat-msg"><b>@juno:</b> can everyone see my screen?</div>'; }
+    else renderGcPanel();
+  }
+  function renderGcPanel(){
+    if(gcPanel !== 'people') return;
+    document.getElementById('gcPanelBody').innerHTML = gcPeople.map(p => {
+      const initials = p.me ? 'R' : (p.name[1]?p.name[1].toUpperCase():p.name[0].toUpperCase());
+      return `<div class="gc-person-row"><div class="avatar-sm" style="width:30px;height:30px;font-size:12px;background:${p.color}">${initials}</div>
+        <span class="gc-person-name">${p.me?'You':p.name}</span>
+        ${p.hand?'<span>✋</span>':''}<span>${p.muted?'🔇':'🎤'}</span></div>`;
+    }).join('');
+  }
+  function gcSendChat(){
+    const input = document.getElementById('gcChatInput');
+    if(!input.value.trim()) return;
+    const body = document.getElementById('gcPanelBody');
+    body.innerHTML += `<div class="gc-chat-msg gc-chat-me"><b>You:</b> ${input.value.trim()}</div>`;
+    input.value = ''; body.scrollTop = body.scrollHeight;
+  }
+  function leaveGroupCall(){
+    clearInterval(gcTimer); clearInterval(gcSpeakInterval);
+    if(gcStream){ gcStream.getTracks().forEach(t=>t.stop()); gcStream = null; }
+    document.getElementById('groupCall').classList.remove('open');
+    document.getElementById('gcSidePanel').classList.remove('open');
+    document.getElementById('gcFlip').style.display = 'none';
+    gcFacing = 'user'; gcDeviceIndex = 0; gcPanel = null;
+    showToast('You left the call');
   }
 </script>
 
